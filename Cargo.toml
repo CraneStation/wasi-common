@@ -5,5 +5,5 @@ authors = ["Dan Gohman <sunfish@mozilla.com>"]
 edition = "2018"
 
 [dependencies]
-libc = { git = "https://github.com/sunfishcode/libc", branch="wasi-more-libc" }
+libc = { git = "https://github.com/rust-lang/libc" }
 errno = { git = "https://github.com/sunfishcode/rust-errno", branch="wasi" }
