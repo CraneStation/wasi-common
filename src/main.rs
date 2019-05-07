@@ -3,6 +3,32 @@ use libc;
 use std::ffi::CString;
 use std::{env, mem, process, ptr};
 
+unsafe fn cleanup_dir(dir_fd: libc::__wasi_fd_t, dir_name: &str) {
+    let status = libc::__wasi_path_remove_directory(
+        dir_fd,
+        dir_name.as_ptr() as *const libc::c_char,
+        dir_name.len(),
+    );
+    assert_eq!(
+        status,
+        libc::__WASI_ESUCCESS,
+        "remove_directory on an empty directory should succeed"
+    );
+}
+
+unsafe fn cleanup_file(dir_fd: libc::__wasi_fd_t, file_name: &str) {
+    let status = libc::__wasi_path_unlink_file(
+        dir_fd,
+        file_name.as_ptr() as *const libc::c_char,
+        file_name.len(),
+    );
+    assert_eq!(
+        status,
+        libc::__WASI_ESUCCESS,
+        "unlink_file on a symlink should succeed"
+    );
+}
+
 unsafe fn test_sched_yield() {
     let status = libc::__wasi_sched_yield();
     assert_eq!(status, libc::__WASI_ESUCCESS, "sched_yield");
@@ -176,16 +202,7 @@ unsafe fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Clean up.
-    status = libc::__wasi_path_remove_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "remove_directory on a directory should succeed"
-    );
+    cleanup_dir(dir_fd, "dir");
 }
 
 unsafe fn test_remove_nonempty_directory(dir_fd: libc::__wasi_fd_t) {
@@ -490,16 +507,7 @@ unsafe fn test_symlink_loop(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Clean up.
-    status = libc::__wasi_path_unlink_file(
-        dir_fd,
-        "symlink".as_ptr() as *const libc::c_char,
-        "symlink".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a symlink should succeed"
-    );
+    cleanup_file(dir_fd, "symlink");
 }
 
 unsafe fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
@@ -721,26 +729,8 @@ unsafe fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Clean up.
-    status = libc::__wasi_path_unlink_file(
-        dir_fd,
-        "target".as_ptr() as *const libc::c_char,
-        "target".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a file should succeed"
-    );
-    status = libc::__wasi_path_unlink_file(
-        dir_fd,
-        "symlink".as_ptr() as *const libc::c_char,
-        "symlink".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a symlink should succeed"
-    );
+    cleanup_file(dir_fd, "target");
+    cleanup_file(dir_fd, "symlink");
 }
 
 unsafe fn test_close_preopen(dir_fd: libc::__wasi_fd_t) {
@@ -847,16 +837,7 @@ unsafe fn test_readlink_no_buffer(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Clean up.
-    status = libc::__wasi_path_unlink_file(
-        dir_fd,
-        "symlink".as_ptr() as *const libc::c_char,
-        "symlink".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a symlink should succeed"
-    );
+    cleanup_file(dir_fd, "symlink");
 }
 
 unsafe fn test_isatty(dir_fd: libc::__wasi_fd_t) {
@@ -950,16 +931,7 @@ unsafe fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
         libc::__WASI_ESUCCESS,
         "closing a directory"
     );
-    status = libc::__wasi_path_remove_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "remove_directory on a directory should succeed"
-    );
+    cleanup_dir(dir_fd, "dir");
 }
 
 fn main() {
