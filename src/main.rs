@@ -953,7 +953,7 @@ fn main() {
     } as libc::__wasi_fd_t;
     if (dir_fd as libc::c_int) < 0 {
         eprintln!(
-            "error opening scratch diractory '{}': {}",
+            "error opening scratch directory '{}': {}",
             arg,
             errno::errno()
         );
