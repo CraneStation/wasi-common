@@ -975,4 +975,5 @@ fn main() {
         test_isatty(dir_fd);
         test_directory_seek(dir_fd);
     }
+    println!("Success!");
 }
