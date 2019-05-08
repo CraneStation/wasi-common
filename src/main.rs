@@ -29,6 +29,10 @@ fn cleanup_file(dir_fd: libc::__wasi_fd_t, file_name: &str) {
     );
 }
 
+fn close_fd(fd: libc::__wasi_fd_t) {
+    assert_eq!(wasi_fd_close(fd), libc::__WASI_ESUCCESS, "closing a file");
+}
+
 fn test_sched_yield() {
     let status = wasi_sched_yield();
     assert_eq!(status, libc::__WASI_ESUCCESS, "sched_yield");
@@ -52,11 +56,7 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Get the rights for the scratch directory.
     let mut dir_fdstat: libc::__wasi_fdstat_t = unsafe { mem::zeroed() };
@@ -91,11 +91,7 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
             &mut file_fd,
         );
         assert_eq!(status, libc::__WASI_ESUCCESS, "truncating a file");
-        assert_eq!(
-            wasi_fd_close(file_fd),
-            libc::__WASI_ESUCCESS,
-            "closing a file"
-        );
+        close_fd(file_fd);
 
         let mut rights_base: libc::__wasi_rights_t = dir_fdstat.fs_rights_base;
         let mut rights_inheriting: libc::__wasi_rights_t = dir_fdstat.fs_rights_inheriting;
@@ -129,11 +125,7 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
             libc::__WASI_ESUCCESS,
             "truncating a file without fd_filestat_set_size right",
         );
-        assert_eq!(
-            wasi_fd_close(file_fd),
-            libc::__WASI_ESUCCESS,
-            "closing a file"
-        );
+        close_fd(file_fd);
 
         rights_base &= !libc::__WASI_RIGHT_PATH_FILESTAT_SET_SIZE;
         status = wasi_fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting);
@@ -235,11 +227,7 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Now open it with an absolute path.
     status = wasi_path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0, &mut file_fd);
@@ -274,11 +262,7 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Now open it with a trailing NUL.
     status = wasi_path_open(dir_fd, 0, "dir/nested/file\0", 0, 0, 0, 0, &mut file_fd);
@@ -317,11 +301,7 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Now open it with a path containing too many ".."s.
     let bad_path = format!("dir/nested/../../../{}/dir/nested/file", arg);
@@ -460,11 +440,7 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Replace the target directory with a file.
     status = wasi_path_remove_directory(dir_fd, "target");
@@ -488,11 +464,7 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
         "file descriptor range check",
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     // Try to open it as a directory with O_NOFOLLOW again.
     status = wasi_path_open(
@@ -672,11 +644,7 @@ fn test_isatty(dir_fd: libc::__wasi_fd_t) {
         0,
         "file is a tty"
     );
-    assert_eq!(
-        wasi_fd_close(file_fd),
-        libc::__WASI_ESUCCESS,
-        "closing a file"
-    );
+    close_fd(file_fd);
 
     cleanup_file(dir_fd, "file");
 }
@@ -727,11 +695,7 @@ fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Clean up.
-    assert_eq!(
-        wasi_fd_close(fd),
-        libc::__WASI_ESUCCESS,
-        "closing a directory"
-    );
+    close_fd(fd);
     cleanup_dir(dir_fd, "dir");
 }
 
