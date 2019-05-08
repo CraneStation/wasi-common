@@ -3,6 +3,15 @@ use libc;
 use std::ffi::CString;
 use std::{env, mem, process, ptr};
 
+unsafe fn create_dir(dir_fd: libc::__wasi_fd_t, dir_name: &str) {
+    let status: libc::__wasi_errno_t = libc::__wasi_path_create_directory(
+        dir_fd,
+        dir_name.as_ptr() as *const libc::c_char,
+        dir_name.len(),
+    );
+    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a directory");
+}
+
 unsafe fn cleanup_dir(dir_fd: libc::__wasi_fd_t, dir_name: &str) {
     let status = libc::__wasi_path_remove_directory(
         dir_fd,
@@ -182,15 +191,10 @@ unsafe fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
 
 unsafe fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
     // Create a directory in the scratch directory.
-    let mut status: libc::__wasi_errno_t = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a directory");
+    create_dir(dir_fd, "dir");
 
     // Test that unlinking it fails.
-    status = libc::__wasi_path_unlink_file(
+    let status = libc::__wasi_path_unlink_file(
         dir_fd,
         "dir".as_ptr() as *const libc::c_char,
         "dir".len(),
@@ -207,23 +211,13 @@ unsafe fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
 
 unsafe fn test_remove_nonempty_directory(dir_fd: libc::__wasi_fd_t) {
     // Create a directory in the scratch directory.
-    let mut status: libc::__wasi_errno_t = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a directory");
+    create_dir(dir_fd, "dir");
 
     // Create a directory in the directory we just created.
-    status = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir/nested".as_ptr() as *const libc::c_char,
-        "dir/nested".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a directory");
+    create_dir(dir_fd, "dir/nested");
 
     // Test that attempting to unlink the first directory returns the expected error code.
-    status = libc::__wasi_path_remove_directory(
+    let mut status = libc::__wasi_path_remove_directory(
         dir_fd,
         "dir".as_ptr() as *const libc::c_char,
         "dir".len(),
@@ -245,38 +239,19 @@ unsafe fn test_remove_nonempty_directory(dir_fd: libc::__wasi_fd_t) {
         libc::__WASI_ESUCCESS,
         "remove_directory on a nested directory should succeed",
     );
-    status = libc::__wasi_path_remove_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "remove_directory on a directory should succeed"
-    );
+    cleanup_dir(dir_fd, "dir");
 }
 
 unsafe fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     // Create a directory in the scratch directory.
-    let mut status: libc::__wasi_errno_t = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a directory");
+    create_dir(dir_fd, "dir");
 
     // Create a directory in the directory we just created.
-    status = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir/nested".as_ptr() as *const libc::c_char,
-        "dir/nested".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a directory");
+    create_dir(dir_fd, "dir/nested");
 
     // Create a file in the nested directory.
     let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
-    status = libc::__wasi_path_open(
+    let mut status = libc::__wasi_path_open(
         dir_fd,
         0,
         "dir/nested/file".as_ptr() as *const libc::c_char,
@@ -546,12 +521,7 @@ unsafe fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
 
     // Create a directory for the symlink to point to.
-    status = libc::__wasi_path_create_directory(
-        dir_fd,
-        "target".as_ptr() as *const libc::c_char,
-        "target".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a directory");
+    create_dir(dir_fd, "target");
 
     // Try to open it as a directory with O_NOFOLLOW again.
     status = libc::__wasi_path_open(
@@ -877,16 +847,11 @@ unsafe fn test_isatty(dir_fd: libc::__wasi_fd_t) {
 
 unsafe fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
     // Create a directory in the scratch directory.
-    let mut status: libc::__wasi_errno_t = libc::__wasi_path_create_directory(
-        dir_fd,
-        "dir".as_ptr() as *const libc::c_char,
-        "dir".len(),
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a directory");
+    create_dir(dir_fd, "dir");
 
     // Open the directory and attempt to request rights for seeking.
     let mut fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
-    status = libc::__wasi_path_open(
+    let mut status = libc::__wasi_path_open(
         dir_fd,
         0,
         "dir".as_ptr() as *const libc::c_char,
