@@ -167,12 +167,7 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
         );
     }
 
-    status = wasi_path_unlink_file(dir_fd, "file");
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a file should succeed"
-    );
+    cleanup_file(dir_fd, "file");
 }
 
 fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
@@ -683,12 +678,7 @@ fn test_isatty(dir_fd: libc::__wasi_fd_t) {
         "closing a file"
     );
 
-    let status = wasi_path_unlink_file(dir_fd, "file");
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "unlink_file on a file should succeed"
-    );
+    cleanup_file(dir_fd, "file");
 }
 
 fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
