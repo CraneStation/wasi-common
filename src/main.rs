@@ -674,6 +674,21 @@ fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
     cleanup_dir(dir_fd, "dir");
 }
 
+fn test_big_random_buf() {
+    let mut buf = Vec::new();
+    buf.resize(1024, 0);
+    let status =
+        unsafe { libc::__wasi_random_get(buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
+    assert_eq!(
+        status,
+        libc::__WASI_ESUCCESS,
+        "calling get_random on a large buffer"
+    );
+    // Chances are pretty good that at least *one* byte will be non-zero in
+    // any meaningful random function producing 1024 u8 values.
+    assert!(buf.iter().any(|x| *x != 0), "random_get returned all zeros");
+}
+
 fn main() {
     let mut args = env::args();
     let prog = args.next().unwrap();
@@ -713,6 +728,7 @@ fn main() {
     test_readlink_no_buffer(dir_fd);
     test_isatty(dir_fd);
     test_directory_seek(dir_fd);
+    test_big_random_buf();
 
     println!("Success!");
 }
