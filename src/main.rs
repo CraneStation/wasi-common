@@ -114,6 +114,20 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
             "droping path_filestat_set_size base right on a directory",
         );
 
+        // Test that clearing __WASI_RIGHT_PATH_FILESTAT_SET_SIZE actually
+        // took effect.
+        status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
+        assert_eq!(
+            status,
+            libc::__WASI_ESUCCESS,
+            "reading the fdstat from a directory",
+        );
+        assert_eq!(
+            (dir_fdstat.fs_rights_base & libc::__WASI_RIGHT_PATH_FILESTAT_SET_SIZE),
+            0,
+            "reading the fdstat from a directory",
+        );
+
         // Test that we can't truncate the file without the
         // __WASI_RIGHT_PATH_FILESTAT_SET_SIZE right.
         status = wasi_path_open(
