@@ -49,6 +49,10 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
         dir_fdstat.fs_flags == 0,
         "expected the scratch directory to have no special flags",
     );
+    assert!(
+        (dir_fdstat.fs_rights_base & libc::__WASI_RIGHT_FD_FILESTAT_SET_SIZE) == 0,
+        "directories shouldn't have the fd_filestat_set_size right",
+    );
 
     // If we have the right to set sizes from paths, test that it works.
     if (dir_fdstat.fs_rights_base & libc::__WASI_RIGHT_PATH_FILESTAT_SET_SIZE) == 0 {
