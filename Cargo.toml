@@ -1,9 +1,10 @@
 [package]
 name = "misc-tests"
 version = "0.1.0"
-authors = ["Dan Gohman <sunfish@mozilla.com>"]
+authors = ["Dan Gohman <sunfish@mozilla.com>", "Jakub Konka <kubkon@jakubkonka.com>"]
 edition = "2018"
 
 [dependencies]
 libc = { git = "https://github.com/rust-lang/libc" }
 errno = { git = "https://github.com/sunfishcode/rust-errno", branch="wasi" }
+
