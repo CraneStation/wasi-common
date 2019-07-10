@@ -172,3 +172,21 @@ pub fn wasi_fd_write(
 ) -> libc::__wasi_errno_t {
     unsafe { libc::__wasi_fd_write(fd, iovs.as_ptr(), iovs.len(), nwritten) }
 }
+
+pub fn wasi_fd_pread(
+    fd: libc::__wasi_fd_t,
+    iovs: &[libc::__wasi_iovec_t],
+    offset: libc::__wasi_filesize_t,
+    nread: &mut usize,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_pread(fd, iovs.as_ptr(), iovs.len(), offset, nread) }
+}
+
+pub fn wasi_fd_pwrite(
+    fd: libc::__wasi_fd_t,
+    iovs: &mut [libc::__wasi_ciovec_t],
+    offset: libc::__wasi_filesize_t,
+    nwritten: &mut usize,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_pwrite(fd, iovs.as_ptr(), iovs.len(), offset, nwritten) }
+}
