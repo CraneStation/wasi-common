@@ -142,3 +142,18 @@ pub fn wasi_clock_time_get(
 ) -> libc::__wasi_errno_t {
     unsafe { libc::__wasi_clock_time_get(clock_id, precision, time) }
 }
+
+pub fn wasi_fd_filestat_get(
+    fd: libc::__wasi_fd_t,
+    filestat: &mut libc::__wasi_filestat_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_filestat_get(fd, filestat) }
+}
+
+pub fn wasi_fd_allocate(
+    fd: libc::__wasi_fd_t,
+    offset: libc::__wasi_filesize_t,
+    len: libc::__wasi_filesize_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_allocate(fd, offset, len) }
+}
