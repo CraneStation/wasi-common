@@ -135,6 +135,13 @@ pub fn wasi_fd_seek(
     unsafe { libc::__wasi_fd_seek(fd, offset, whence, newoffset) }
 }
 
+pub fn wasi_fd_tell(
+    fd: libc::__wasi_fd_t,
+    offset: &mut libc::__wasi_filesize_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_tell(fd, offset) }
+}
+
 pub fn wasi_clock_time_get(
     clock_id: libc::__wasi_clockid_t,
     precision: libc::__wasi_timestamp_t,
@@ -156,4 +163,12 @@ pub fn wasi_fd_allocate(
     len: libc::__wasi_filesize_t,
 ) -> libc::__wasi_errno_t {
     unsafe { libc::__wasi_fd_allocate(fd, offset, len) }
+}
+
+pub fn wasi_fd_write(
+    fd: libc::__wasi_fd_t,
+    iovs: &[libc::__wasi_ciovec_t],
+    nwritten: &mut libc::size_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_write(fd, iovs.as_ptr(), iovs.len(), nwritten) }
 }
