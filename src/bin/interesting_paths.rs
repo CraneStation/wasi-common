@@ -1,6 +1,6 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::{close_fd, create_dir};
+use misc_tests::utils::{close_fd, create_dir, create_file};
 use misc_tests::wasi::{wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file};
 use std::{env, process};
 
@@ -12,26 +12,11 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     create_dir(dir_fd, "dir/nested");
 
     // Create a file in the nested directory.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
-    let mut status = wasi_path_open(
-        dir_fd,
-        0,
-        "dir/nested/file",
-        libc::__WASI_O_CREAT,
-        0,
-        0,
-        0,
-        &mut file_fd,
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
-    assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
-        "file descriptor range check",
-    );
-    close_fd(file_fd);
+    create_file(dir_fd, "dir/nested/file");
 
     // Now open it with an absolute path.
-    status = wasi_path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0, &mut file_fd);
+    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut status = wasi_path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
         libc::__WASI_ENOTCAPABLE,

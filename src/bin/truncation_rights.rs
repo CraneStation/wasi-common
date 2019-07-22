@@ -1,32 +1,16 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_file, close_fd};
+use misc_tests::utils::{cleanup_file, close_fd, create_file};
 use misc_tests::wasi::{wasi_fd_fdstat_get, wasi_fd_fdstat_set_rights, wasi_path_open};
 use std::{env, mem, process};
 
 fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
     // Create a file in the scratch directory.
-    let mut file_fd = libc::__wasi_fd_t::max_value() - 1;
-    let mut status = wasi_path_open(
-        dir_fd,
-        0,
-        "file",
-        libc::__WASI_O_CREAT,
-        0,
-        0,
-        0,
-        &mut file_fd,
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
-    assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
-        "file descriptor range check",
-    );
-    close_fd(file_fd);
+    create_file(dir_fd, "file");
 
     // Get the rights for the scratch directory.
     let mut dir_fdstat: libc::__wasi_fdstat_t = unsafe { mem::zeroed() };
-    status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
+    let mut status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
         libc::__WASI_ESUCCESS,
@@ -50,6 +34,7 @@ fn test_truncation_rights(dir_fd: libc::__wasi_fd_t) {
         eprintln!("implementation doesn't support setting file sizes, skipping");
     } else {
         // Test that we can truncate the file.
+        let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
         status = wasi_path_open(
             dir_fd,
             0,

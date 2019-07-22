@@ -1,6 +1,6 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_file, close_fd, create_dir};
+use misc_tests::utils::{cleanup_file, close_fd, create_dir, create_file};
 use misc_tests::wasi::{wasi_path_open, wasi_path_remove_directory, wasi_path_symlink};
 use std::{env, process};
 
@@ -79,22 +79,7 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
         libc::__WASI_ESUCCESS,
         "remove_directory on a directory should succeed"
     );
-    status = wasi_path_open(
-        dir_fd,
-        0,
-        "target",
-        libc::__WASI_O_CREAT,
-        0,
-        0,
-        0,
-        &mut file_fd,
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
-    assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
-        "file descriptor range check",
-    );
-    close_fd(file_fd);
+    create_file(dir_fd, "target");
 
     status = wasi_path_symlink("target", dir_fd, "symlink");
     assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
