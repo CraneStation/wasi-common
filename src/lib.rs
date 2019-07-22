@@ -1,9 +1,9 @@
 pub mod utils;
 pub mod wasi;
 
-use errno;
 use libc;
 use std::ffi::CString;
+use std::io;
 
 pub fn open_scratch_directory(path: &str) -> Result<libc::__wasi_fd_t, String> {
     // Open the scratch directory.
@@ -18,7 +18,7 @@ pub fn open_scratch_directory(path: &str) -> Result<libc::__wasi_fd_t, String> {
         Err(format!(
             "error opening scratch directory '{}': {}",
             path,
-            errno::errno()
+            io::Error::last_os_error()
         ))
     } else {
         Ok(dir_fd)
