@@ -17,6 +17,10 @@ fn test_readlink_no_buffer(dir_fd: libc::__wasi_fd_t) {
         libc::__WASI_ESUCCESS,
         "readlink with a 0-sized buffer should succeed"
     );
+    assert_eq!(
+        bufused, 0,
+        "readlink with a 0-sized buffer should return 'bufused' 0"
+    );
 
     // Clean up.
     cleanup_file(dir_fd, "symlink");
