@@ -91,12 +91,38 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
         "failed open should set the file descriptor to -1",
     );
 
+    // Now open it with trailing slashes.
+    status = wasi_path_open(dir_fd, 0, "dir/nested/file///", 0, 0, 0, 0, &mut file_fd);
+    assert_eq!(
+        status,
+        libc::__WASI_ENOTDIR,
+        "opening a file with trailing slashes"
+    );
+    assert_eq!(
+        file_fd,
+        libc::__wasi_fd_t::max_value(),
+        "failed open should set the file descriptor to -1",
+    );
+
     // Now open the directory with a trailing slash.
     status = wasi_path_open(dir_fd, 0, "dir/nested/", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
         libc::__WASI_ESUCCESS,
         "opening a directory with a trailing slash"
+    );
+    assert!(
+        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        "file descriptor range check",
+    );
+    close_fd(file_fd);
+
+    // Now open the directory with trailing slashes.
+    status = wasi_path_open(dir_fd, 0, "dir/nested///", 0, 0, 0, 0, &mut file_fd);
+    assert_eq!(
+        status,
+        libc::__WASI_ESUCCESS,
+        "opening a directory with trailing slashes"
     );
     assert!(
         file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
