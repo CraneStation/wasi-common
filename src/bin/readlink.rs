@@ -1,30 +1,15 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_file, close_fd};
-use misc_tests::wasi::{wasi_path_open, wasi_path_readlink, wasi_path_symlink};
+use misc_tests::utils::{cleanup_file, create_file};
+use misc_tests::wasi::{wasi_path_readlink, wasi_path_symlink};
 use std::{env, process};
 
 fn test_readlink(dir_fd: libc::__wasi_fd_t) {
     // Create a file in the scratch directory.
-    let mut file_fd = libc::__wasi_fd_t::max_value() - 1;
-    let mut status = wasi_path_open(
-        dir_fd,
-        0,
-        "target",
-        libc::__WASI_O_CREAT,
-        0,
-        0,
-        0,
-        &mut file_fd,
-    );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
-    assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
-        "file descriptor range check",
-    );
+    create_file(dir_fd, "target");
 
     // Create a symlink
-    status = wasi_path_symlink("target", dir_fd, "symlink");
+    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
     assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
 
     // Read link into the buffer
@@ -53,7 +38,6 @@ fn test_readlink(dir_fd: libc::__wasi_fd_t) {
     assert_eq!(buf, "targ".as_bytes(), "buffer should contain 'targ'");
 
     // Clean up.
-    close_fd(file_fd);
     cleanup_file(dir_fd, "target");
     cleanup_file(dir_fd, "symlink");
 }
