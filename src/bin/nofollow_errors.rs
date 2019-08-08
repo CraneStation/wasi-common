@@ -5,37 +5,15 @@ use misc_tests::wasi::{wasi_path_open, wasi_path_remove_directory, wasi_path_sym
 use std::{env, process};
 
 fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
-    // First create a dangling symlink.
-    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
-
-    // Try to open it as a directory with O_NOFOLLOW.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
-    status = wasi_path_open(
-        dir_fd,
-        0,
-        "symlink",
-        libc::__WASI_O_DIRECTORY,
-        0,
-        0,
-        0,
-        &mut file_fd,
-    );
-    assert_eq!(
-        status,
-        libc::__WASI_ELOOP,
-        "opening a dangling symlink as a directory",
-    );
-    assert_eq!(
-        file_fd,
-        libc::__wasi_fd_t::max_value(),
-        "failed open should set the file descriptor to -1",
-    );
-
     // Create a directory for the symlink to point to.
     create_dir(dir_fd, "target");
 
+    // Create a symlink.
+    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
+    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+
     // Try to open it as a directory with O_NOFOLLOW again.
+    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
     status = wasi_path_open(
         dir_fd,
         0,
@@ -93,6 +71,8 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     close_fd(file_fd);
 
     // Replace the target directory with a file.
+    cleanup_file(dir_fd, "symlink");
+
     status = wasi_path_remove_directory(dir_fd, "target");
     assert_eq!(
         status,
@@ -115,6 +95,9 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
         "file descriptor range check",
     );
     close_fd(file_fd);
+
+    status = wasi_path_symlink("target", dir_fd, "symlink");
+    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
 
     // Try to open it as a directory with O_NOFOLLOW again.
     status = wasi_path_open(
