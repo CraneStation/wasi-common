@@ -1,6 +1,6 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::close_fd;
+use misc_tests::utils::{cleanup_file, close_fd};
 use misc_tests::wasi::{wasi_fd_seek, wasi_fd_tell, wasi_fd_write, wasi_path_open};
 use std::{env, process};
 
@@ -92,6 +92,7 @@ fn test_file_seek_tell(dir_fd: libc::__wasi_fd_t) {
     );
 
     close_fd(file_fd);
+    cleanup_file(dir_fd, "file");
 }
 fn main() {
     let mut args = env::args();

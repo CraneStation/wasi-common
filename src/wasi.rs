@@ -164,7 +164,6 @@ pub fn wasi_fd_filestat_set_size(
     unsafe { libc::__wasi_fd_filestat_set_size(fd, st_size) }
 }
 
-
 pub fn wasi_fd_filestat_set_times(
     fd: libc::__wasi_fd_t,
     st_atim: libc::__wasi_timestamp_t,

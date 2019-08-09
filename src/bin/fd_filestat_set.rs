@@ -1,7 +1,9 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_file, close_fd};
-use misc_tests::wasi::{wasi_fd_filestat_set_size, wasi_fd_filestat_set_times, wasi_fd_filestat_get, wasi_path_open};
+use misc_tests::wasi::{
+    wasi_fd_filestat_get, wasi_fd_filestat_set_size, wasi_fd_filestat_set_times, wasi_path_open,
+};
 use std::{env, process};
 
 fn test_fd_filestat_set(dir_fd: libc::__wasi_fd_t) {
@@ -53,12 +55,9 @@ fn test_fd_filestat_set(dir_fd: libc::__wasi_fd_t) {
     // Check fd_filestat_set_times
     let old_atim = stat.st_atim;
     let new_mtim = stat.st_mtim - 100;
-    let status = wasi_fd_filestat_set_times(file_fd, new_mtim, new_mtim, libc::__WASI_FILESTAT_SET_MTIM);
-    assert_eq!(
-        status,
-        libc::__WASI_ESUCCESS,
-        "fd_filestat_set_times"
-    );
+    let status =
+        wasi_fd_filestat_set_times(file_fd, new_mtim, new_mtim, libc::__WASI_FILESTAT_SET_MTIM);
+    assert_eq!(status, libc::__WASI_ESUCCESS, "fd_filestat_set_times");
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
@@ -70,12 +69,8 @@ fn test_fd_filestat_set(dir_fd: libc::__wasi_fd_t) {
         stat.st_size, 100,
         "file size should remain unchanged at 100"
     );
-    assert_eq!(
-        stat.st_mtim, new_mtim, "mtim should change"
-    );
-    assert_eq!(
-        stat.st_atim, old_atim, "atim should not change"
-    );
+    assert_eq!(stat.st_mtim, new_mtim, "mtim should change");
+    assert_eq!(stat.st_atim, old_atim, "atim should not change");
 
     // let status = wasi_fd_filestat_set_times(file_fd, new_mtim, new_mtim, libc::__WASI_FILESTAT_SET_MTIM | libc::__WASI_FILESTAT_SET_MTIM_NOW);
     // assert_eq!(status, libc::__WASI_EINVAL, "ATIM & ATIM_NOW can't both be set");

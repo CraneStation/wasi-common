@@ -1,6 +1,6 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::utils::close_fd;
+use misc_tests::utils::{cleanup_file, close_fd};
 use misc_tests::wasi::{wasi_fd_pread, wasi_fd_pwrite, wasi_path_open};
 use std::{env, process};
 
@@ -77,6 +77,7 @@ fn test_file_pread_pwrite(dir_fd: libc::__wasi_fd_t) {
     assert_eq!(contents, &[0u8, 1, 1, 0], "file cursor was overwritten");
 
     close_fd(file_fd);
+    cleanup_file(dir_fd, "file");
 }
 fn main() {
     let mut args = env::args();
