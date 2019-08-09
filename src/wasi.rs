@@ -157,6 +157,23 @@ pub fn wasi_fd_filestat_get(
     unsafe { libc::__wasi_fd_filestat_get(fd, filestat) }
 }
 
+pub fn wasi_fd_filestat_set_size(
+    fd: libc::__wasi_fd_t,
+    st_size: libc::__wasi_filesize_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_filestat_set_size(fd, st_size) }
+}
+
+
+pub fn wasi_fd_filestat_set_times(
+    fd: libc::__wasi_fd_t,
+    st_atim: libc::__wasi_timestamp_t,
+    st_mtim: libc::__wasi_timestamp_t,
+    fst_flags: libc::__wasi_fstflags_t,
+) -> libc::__wasi_errno_t {
+    unsafe { libc::__wasi_fd_filestat_set_times(fd, st_atim, st_mtim, fst_flags) }
+}
+
 pub fn wasi_fd_allocate(
     fd: libc::__wasi_fd_t,
     offset: libc::__wasi_filesize_t,
