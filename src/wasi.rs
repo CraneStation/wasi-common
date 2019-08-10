@@ -107,6 +107,24 @@ pub fn wasi_path_readlink(
     }
 }
 
+pub fn wasi_path_rename(
+    old_dirfd: libc::__wasi_fd_t,
+    old_path: &str,
+    new_dirfd: libc::__wasi_fd_t,
+    new_path: &str,
+) -> libc::__wasi_errno_t {
+    unsafe {
+        libc::__wasi_path_rename(
+            old_dirfd,
+            old_path.as_ptr() as *const _,
+            old_path.len(),
+            new_dirfd,
+            new_path.as_ptr() as *const _,
+            new_path.len(),
+        )
+    }
+}
+
 pub fn wasi_fd_fdstat_get(
     fd: libc::__wasi_fd_t,
     fdstat: &mut libc::__wasi_fdstat_t,
