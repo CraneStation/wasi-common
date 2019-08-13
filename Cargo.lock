@@ -10,7 +10,14 @@ name = "misc-tests"
 version = "0.1.0"
 dependencies = [
  "libc 0.2.60 (git+https://github.com/rust-lang/libc)",
+ "wasi 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "wasi"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [metadata]
 "checksum libc 0.2.60 (git+https://github.com/rust-lang/libc)" = "<none>"
+"checksum wasi 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fd5442abcac6525a045cc8c795aedb60da7a2e5e89c7bf18a0d5357849bb23c7"

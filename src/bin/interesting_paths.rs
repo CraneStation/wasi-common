@@ -1,10 +1,13 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{close_fd, create_dir, create_file};
-use misc_tests::wasi::{wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file};
+use misc_tests::wasi_wrappers::{
+    wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file,
+};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
+fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
@@ -15,16 +18,16 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     create_file(dir_fd, "dir/nested/file");
 
     // Now open it with an absolute path.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     let mut status = wasi_path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTCAPABLE,
+        wasi_unstable::ENOTCAPABLE,
         "opening a file with an absolute path"
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -41,11 +44,11 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening a file with \"..\" in the path"
     );
     assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);
@@ -54,12 +57,12 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file\0", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_EILSEQ,
+        wasi_unstable::EILSEQ,
         "opening a file with a trailing NUL"
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -67,12 +70,12 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file/", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTDIR,
+        wasi_unstable::ENOTDIR,
         "opening a file with a trailing slash"
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -80,12 +83,12 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file///", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTDIR,
+        wasi_unstable::ENOTDIR,
         "opening a file with trailing slashes"
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -93,11 +96,11 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening a directory with a trailing slash"
     );
     assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);
@@ -106,11 +109,11 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested///", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening a directory with trailing slashes"
     );
     assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);
@@ -120,30 +123,30 @@ fn test_interesting_paths(dir_fd: libc::__wasi_fd_t, arg: &str) {
     status = wasi_path_open(dir_fd, 0, &bad_path, 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTCAPABLE,
+        wasi_unstable::ENOTCAPABLE,
         "opening a file with too many \"..\"s in the path"
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
     status = wasi_path_unlink_file(dir_fd, "dir/nested/file");
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "unlink_file on a symlink should succeed"
     );
     status = wasi_path_remove_directory(dir_fd, "dir/nested");
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "remove_directory on a directory should succeed"
     );
     status = wasi_path_remove_directory(dir_fd, "dir");
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "remove_directory on a directory should succeed"
     );
 }

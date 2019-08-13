@@ -1,50 +1,51 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_dir, close_fd, create_dir};
-use misc_tests::wasi::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
+use misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
 use std::{env, mem, process};
+use wasi::wasi_unstable;
 
-fn test_directory_seek(dir_fd: libc::__wasi_fd_t) {
+fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
     // Open the directory and attempt to request rights for seeking.
-    let mut fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     let mut status = wasi_path_open(
         dir_fd,
         0,
         "dir",
         0,
-        libc::__WASI_RIGHT_FD_SEEK,
+        wasi_unstable::RIGHT_FD_SEEK,
         0,
         0,
         &mut fd,
     );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
     assert!(
-        fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
     // Attempt to seek.
     let mut newoffset = 1;
-    status = wasi_fd_seek(fd, 0, libc::__WASI_WHENCE_CUR, &mut newoffset);
-    assert_eq!(status, libc::__WASI_ENOTCAPABLE, "seek on a directory");
+    status = wasi_fd_seek(fd, 0, wasi_unstable::WHENCE_CUR, &mut newoffset);
+    assert_eq!(status, wasi_unstable::ENOTCAPABLE, "seek on a directory");
 
     // Check if we obtained the right to seek.
-    let mut fdstat: libc::__wasi_fdstat_t = unsafe { mem::zeroed() };
+    let mut fdstat: wasi_unstable::FdStat = unsafe { mem::zeroed() };
     status = wasi_fd_fdstat_get(fd, &mut fdstat);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "calling fd_fdstat on a directory"
     );
     assert!(
-        fdstat.fs_filetype == libc::__WASI_FILETYPE_DIRECTORY,
+        fdstat.fs_filetype == wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
     assert_eq!(
-        (fdstat.fs_rights_base & libc::__WASI_RIGHT_FD_SEEK),
+        (fdstat.fs_rights_base & wasi_unstable::RIGHT_FD_SEEK),
         0,
         "directory has the seek right",
     );

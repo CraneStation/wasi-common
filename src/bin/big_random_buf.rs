@@ -1,11 +1,12 @@
+use wasi::wasi_unstable;
+
 fn test_big_random_buf() {
     let mut buf = Vec::new();
     buf.resize(1024, 0);
-    let status =
-        unsafe { libc::__wasi_random_get(buf.as_mut_ptr() as *mut libc::c_void, buf.len()) };
+    let status = wasi_unstable::random_get(&mut buf);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "calling get_random on a large buffer"
     );
     // Chances are pretty good that at least *one* byte will be non-zero in

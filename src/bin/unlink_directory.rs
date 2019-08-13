@@ -1,10 +1,10 @@
-use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_dir, create_dir};
-use misc_tests::wasi::wasi_path_unlink_file;
+use misc_tests::wasi_wrappers::wasi_path_unlink_file;
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
+fn test_unlink_directory(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
@@ -12,7 +12,7 @@ fn test_unlink_directory(dir_fd: libc::__wasi_fd_t) {
     let status = wasi_path_unlink_file(dir_fd, "dir");
     assert_eq!(
         status,
-        libc::__WASI_EISDIR,
+        wasi_unstable::EISDIR,
         "unlink_file on a directory should fail"
     );
 

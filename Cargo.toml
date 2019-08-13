@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 libc = { git = "https://github.com/rust-lang/libc" }
+wasi = "0.5.0"

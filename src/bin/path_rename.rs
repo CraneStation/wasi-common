@@ -1,25 +1,26 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_dir, cleanup_file, close_fd, create_dir, create_file};
-use misc_tests::wasi::{wasi_path_open, wasi_path_rename};
+use misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_rename};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
+fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     // First, try renaming a dir to nonexistent path
     // Create source directory
     create_dir(dir_fd, "source");
 
     // Try renaming the directory
     let mut status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "renaming a directory");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a directory");
 
     // Check that source directory doesn't exist anymore
-    let mut fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(
         dir_fd,
         0,
         "source",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -27,12 +28,12 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ENOENT,
+        wasi_unstable::ENOENT,
         "opening a nonexistent path as a directory"
     );
     assert_eq!(
         fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -41,7 +42,7 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
         dir_fd,
         0,
         "target",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -49,11 +50,11 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening renamed path as a directory"
     );
     assert!(
-        fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -65,15 +66,15 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     create_dir(dir_fd, "target");
 
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "renaming a directory");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a directory");
 
     // Check that source directory doesn't exist anymore
-    fd = libc::__wasi_fd_t::max_value() - 1;
+    fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(
         dir_fd,
         0,
         "source",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -81,12 +82,12 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ENOENT,
+        wasi_unstable::ENOENT,
         "opening a nonexistent path as a directory"
     );
     assert_eq!(
         fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -95,7 +96,7 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
         dir_fd,
         0,
         "target",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -103,11 +104,11 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening renamed path as a directory"
     );
     assert!(
-        fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -122,13 +123,17 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
     assert_eq!(
         status,
-        libc::__WASI_ENOTEMPTY,
+        wasi_unstable::ENOTEMPTY,
         "renaming directory to a nonempty directory"
     );
 
     // Try renaming dir to a file
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target/file");
-    assert_eq!(status, libc::__WASI_ENOTDIR, "renaming directory to a file");
+    assert_eq!(
+        status,
+        wasi_unstable::ENOTDIR,
+        "renaming directory to a file"
+    );
 
     cleanup_file(dir_fd, "target/file");
     cleanup_dir(dir_fd, "target");
@@ -138,23 +143,23 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     create_file(dir_fd, "source");
 
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "renaming a file");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a file");
 
     // Check that source file doesn't exist anymore
-    fd = libc::__wasi_fd_t::max_value() - 1;
+    fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(dir_fd, 0, "source", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, libc::__WASI_ENOENT, "opening a nonexistent path");
+    assert_eq!(status, wasi_unstable::ENOENT, "opening a nonexistent path");
     assert_eq!(
         fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
     // Check that target file exists
     status = wasi_path_open(dir_fd, 0, "target", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening renamed path");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "opening renamed path");
     assert!(
-        fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -168,25 +173,25 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "renaming file to another existing file"
     );
 
     // Check that source file doesn't exist anymore
-    fd = libc::__wasi_fd_t::max_value() - 1;
+    fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(dir_fd, 0, "source", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, libc::__WASI_ENOENT, "opening a nonexistent path");
+    assert_eq!(status, wasi_unstable::ENOENT, "opening a nonexistent path");
     assert_eq!(
         fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
     // Check that target file exists
     status = wasi_path_open(dir_fd, 0, "target", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening renamed path");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "opening renamed path");
     assert!(
-        fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -200,7 +205,7 @@ fn test_path_rename(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
     assert_eq!(
         status,
-        libc::__WASI_EISDIR,
+        wasi_unstable::EISDIR,
         "renaming file to existing directory"
     );
 

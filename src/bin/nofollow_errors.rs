@@ -1,24 +1,25 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_file, close_fd, create_dir, create_file};
-use misc_tests::wasi::{wasi_path_open, wasi_path_remove_directory, wasi_path_symlink};
+use misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_remove_directory, wasi_path_symlink};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
+fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     // Create a directory for the symlink to point to.
     create_dir(dir_fd, "target");
 
     // Create a symlink.
     let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
 
     // Try to open it as a directory with O_NOFOLLOW again.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(
         dir_fd,
         0,
         "symlink",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -26,12 +27,12 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a directory symlink as a directory",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -39,21 +40,21 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a symlink with O_NOFOLLOW should return ELOOP",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
     // Try to open it as a directory without O_NOFOLLOW.
     status = wasi_path_open(
         dir_fd,
-        libc::__WASI_LOOKUP_SYMLINK_FOLLOW,
+        wasi_unstable::LOOKUP_SYMLINK_FOLLOW,
         "symlink",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -61,11 +62,11 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "opening a symlink as a directory"
     );
     assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);
@@ -76,20 +77,20 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_remove_directory(dir_fd, "target");
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "remove_directory on a directory should succeed"
     );
     create_file(dir_fd, "target");
 
     status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
 
     // Try to open it as a directory with O_NOFOLLOW again.
     status = wasi_path_open(
         dir_fd,
         0,
         "symlink",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -97,12 +98,12 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a directory symlink as a directory",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
@@ -110,21 +111,21 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a symlink with O_NOFOLLOW should return ELOOP",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
     // Try to open it as a directory without O_NOFOLLOW.
     status = wasi_path_open(
         dir_fd,
-        libc::__WASI_LOOKUP_SYMLINK_FOLLOW,
+        wasi_unstable::LOOKUP_SYMLINK_FOLLOW,
         "symlink",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -132,12 +133,12 @@ fn test_nofollow_errors(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ENOTDIR,
+        wasi_unstable::ENOTDIR,
         "opening a symlink to a file as a directory",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 

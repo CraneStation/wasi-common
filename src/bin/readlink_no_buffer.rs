@@ -1,20 +1,20 @@
-use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::cleanup_file;
-use misc_tests::wasi::{wasi_path_readlink, wasi_path_symlink};
+use misc_tests::wasi_wrappers::{wasi_path_readlink, wasi_path_symlink};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_readlink_no_buffer(dir_fd: libc::__wasi_fd_t) {
+fn test_readlink_no_buffer(dir_fd: wasi_unstable::Fd) {
     // First create a dangling symlink.
     let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
 
     // Readlink it into a non-existent buffer.
     let mut bufused: usize = 1;
     status = wasi_path_readlink(dir_fd, "symlink", &mut [], &mut bufused);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "readlink with a 0-sized buffer should succeed"
     );
     assert_eq!(

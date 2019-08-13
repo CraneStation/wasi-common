@@ -1,47 +1,48 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::wasi::{wasi_fd_close, wasi_fd_fdstat_get, wasi_fd_renumber};
+use misc_tests::wasi_wrappers::wasi_fd_fdstat_get;
 use std::{env, mem, process};
+use wasi::wasi_unstable;
 
-fn test_close_preopen(dir_fd: libc::__wasi_fd_t) {
-    let pre_fd: libc::__wasi_fd_t = (libc::STDERR_FILENO + 1) as libc::__wasi_fd_t;
+fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
+    let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
 
     assert!(dir_fd > pre_fd, "dir_fd number");
 
     // Try to close a preopened directory handle.
-    let mut status = wasi_fd_close(pre_fd);
+    let mut status = wasi_unstable::fd_close(pre_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTSUP,
+        wasi_unstable::ENOTSUP,
         "closing a preopened file descriptor",
     );
 
     // Try to renumber over a preopened directory handle.
-    status = wasi_fd_renumber(dir_fd, pre_fd);
+    status = wasi_unstable::fd_renumber(dir_fd, pre_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTSUP,
+        wasi_unstable::ENOTSUP,
         "renumbering over a preopened file descriptor",
     );
 
     // Ensure that dir_fd is still open.
-    let mut dir_fdstat: libc::__wasi_fdstat_t = unsafe { mem::zeroed() };
+    let mut dir_fdstat: wasi_unstable::FdStat = unsafe { mem::zeroed() };
     status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
     assert!(
-        dir_fdstat.fs_filetype == libc::__WASI_FILETYPE_DIRECTORY,
+        dir_fdstat.fs_filetype == wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
 
     // Try to renumber a preopened directory handle.
-    status = wasi_fd_renumber(pre_fd, dir_fd);
+    status = wasi_unstable::fd_renumber(pre_fd, dir_fd);
     assert_eq!(
         status,
-        libc::__WASI_ENOTSUP,
+        wasi_unstable::ENOTSUP,
         "renumbering over a preopened file descriptor",
     );
 
@@ -49,11 +50,11 @@ fn test_close_preopen(dir_fd: libc::__wasi_fd_t) {
     status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
     assert!(
-        dir_fdstat.fs_filetype == libc::__WASI_FILETYPE_DIRECTORY,
+        dir_fdstat.fs_filetype == wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
 }

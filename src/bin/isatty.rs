@@ -1,29 +1,30 @@
 use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::{cleanup_file, close_fd};
-use misc_tests::wasi::wasi_path_open;
+use misc_tests::wasi_wrappers::wasi_path_open;
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_isatty(dir_fd: libc::__wasi_fd_t) {
+fn test_isatty(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory and test if it's a tty.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     let status = wasi_path_open(
         dir_fd,
         0,
         "file",
-        libc::__WASI_O_CREAT,
+        wasi_unstable::O_CREAT,
         0,
         0,
         0,
         &mut file_fd,
     );
-    assert_eq!(status, libc::__WASI_ESUCCESS, "opening a file");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
     assert!(
-        file_fd > libc::STDERR_FILENO as libc::__wasi_fd_t,
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     assert_eq!(
-        unsafe { libc::isatty(file_fd as libc::c_int) },
+        unsafe { libc::isatty(file_fd as std::os::raw::c_int) },
         0,
         "file is a tty"
     );

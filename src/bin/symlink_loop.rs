@@ -1,20 +1,20 @@
-use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::cleanup_file;
-use misc_tests::wasi::{wasi_path_open, wasi_path_symlink};
+use misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_symlink};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_symlink_loop(dir_fd: libc::__wasi_fd_t) {
+fn test_symlink_loop(dir_fd: wasi_unstable::Fd) {
     // Create a self-referencing symlink.
     let mut status = wasi_path_symlink("symlink", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
 
     // Try to open it.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a self-referencing symlink",
     );
 

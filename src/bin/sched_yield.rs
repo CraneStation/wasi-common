@@ -1,8 +1,8 @@
-use misc_tests::wasi::wasi_sched_yield;
+use wasi::wasi_unstable;
 
 fn test_sched_yield() {
-    let status = wasi_sched_yield();
-    assert_eq!(status, libc::__WASI_ESUCCESS, "sched_yield");
+    let status = wasi_unstable::sched_yield();
+    assert_eq!(status, wasi_unstable::ESUCCESS, "sched_yield");
 }
 
 fn main() {

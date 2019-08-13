@@ -1,21 +1,21 @@
-use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::utils::cleanup_file;
-use misc_tests::wasi::{wasi_path_open, wasi_path_symlink};
+use misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_symlink};
 use std::{env, process};
+use wasi::wasi_unstable;
 
-fn test_dangling_symlink(dir_fd: libc::__wasi_fd_t) {
+fn test_dangling_symlink(dir_fd: wasi_unstable::Fd) {
     // First create a dangling symlink.
     let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, libc::__WASI_ESUCCESS, "creating a symlink");
+    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
 
     // Try to open it as a directory with O_NOFOLLOW.
-    let mut file_fd: libc::__wasi_fd_t = libc::__wasi_fd_t::max_value() - 1;
+    let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(
         dir_fd,
         0,
         "symlink",
-        libc::__WASI_O_DIRECTORY,
+        wasi_unstable::O_DIRECTORY,
         0,
         0,
         0,
@@ -23,12 +23,12 @@ fn test_dangling_symlink(dir_fd: libc::__wasi_fd_t) {
     );
     assert_eq!(
         status,
-        libc::__WASI_ELOOP,
+        wasi_unstable::ELOOP,
         "opening a dangling symlink as a directory",
     );
     assert_eq!(
         file_fd,
-        libc::__wasi_fd_t::max_value(),
+        wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
 
