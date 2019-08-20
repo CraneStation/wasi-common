@@ -161,3 +161,43 @@ pub fn wasi_fd_pwrite(
 ) -> wasi_unstable::Errno {
     unsafe { wasi_unstable::raw::__wasi_fd_pwrite(fd, iovs.as_ptr(), iovs.len(), offset, nwritten) }
 }
+
+pub fn wasi_path_filestat_get(
+    fd: libc::__wasi_fd_t,
+    dirflags: libc::__wasi_lookupflags_t,
+    path: &str,
+    path_len: usize,
+    filestat: &mut libc::__wasi_filestat_t,
+) -> libc::__wasi_errno_t {
+    unsafe {
+        libc::__wasi_path_filestat_get(
+            fd,
+            dirflags,
+            path.as_ptr() as *const libc::c_char,
+            path_len,
+            filestat,
+        )
+    }
+}
+
+pub fn wasi_path_filestat_set_times(
+    fd: libc::__wasi_fd_t,
+    dirflags: libc::__wasi_lookupflags_t,
+    path: &str,
+    path_len: usize,
+    st_atim: libc::__wasi_timestamp_t,
+    st_mtim: libc::__wasi_timestamp_t,
+    fst_flags: libc::__wasi_fstflags_t,
+) -> libc::__wasi_errno_t {
+    unsafe {
+        libc::__wasi_path_filestat_set_times(
+            fd,
+            dirflags,
+            path.as_ptr() as *const libc::c_char,
+            path_len,
+            st_atim,
+            st_mtim,
+            fst_flags,
+        )
+    }
+}
