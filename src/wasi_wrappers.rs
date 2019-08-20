@@ -198,6 +198,20 @@ pub fn wasi_path_filestat_set_times(
             st_atim,
             st_mtim,
             fst_flags,
+pub fn wasi_fd_readdir(
+    fd: wasi_unstable::Fd,
+    buf: &mut [u8],
+    buf_len: usize,
+    cookie: wasi_unstable::DirCookie,
+    buf_used: &mut usize,
+) -> wasi_unstable::Errno {
+    unsafe {
+        wasi_unstable::raw::__wasi_fd_readdir(
+            fd,
+            buf.as_mut_ptr() as *mut libc::c_void,
+            buf_len,
+            cookie,
+            buf_used,
         )
     }
 }
