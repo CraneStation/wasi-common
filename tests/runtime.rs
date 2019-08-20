@@ -1,3 +1,6 @@
+// Temporarily disabled to avoid recursive dependencies for publishing
+// on crates.io.
+/*
 use cranelift_codegen::settings::{self, Configurable};
 use std::{collections::HashMap, path::Path};
 use wasmtime_api::{Config, Engine, HostRef, Instance, Module, Store};
@@ -90,3 +93,4 @@ pub fn instantiate(data: &[u8], bin_name: &str, workspace: Option<&Path>) -> Res
 
     Ok(())
 }
+*/

@@ -41,18 +41,22 @@ cpu-time = "1.0"
 
 
 [dev-dependencies]
-wasmtime-runtime = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-environ = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-jit = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-wasi = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-api = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
+# Temporarily disabled to avoid recursive dependencies for publishing
+# on crates.io.
+#wasmtime-runtime = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
+#wasmtime-environ = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
+#wasmtime-jit = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
+#wasmtime-wasi = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
+#wasmtime-api = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
 cranelift-codegen = "0.46.1"
 target-lexicon = "0.8.1"
 pretty_env_logger = "0.3.0"
 tempfile = "3.1.0"
 
-[patch."https://github.com/CraneStation/wasi-common"]
-wasi-common = { path = "." }
+# Temporarily disabled to avoid recursive dependencies for publishing
+# on crates.io.
+#[patch."https://github.com/CraneStation/wasi-common"]
+#wasi-common = { path = "." }
 
 [build-dependencies]
 cfg-if = "0.1.9"

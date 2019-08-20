@@ -7,8 +7,10 @@
 //! Thanks @sunfishcode
 
 fn main() {
-    #[cfg(feature = "wasm_tests")]
-    wasm_tests::build_and_generate_tests();
+    // Temporarily disabled to avoid recursive dependencies for publishing
+    // on crates.io.
+    //#[cfg(feature = "wasm_tests")]
+    //wasm_tests::build_and_generate_tests();
 }
 
 #[cfg(feature = "wasm_tests")]
