@@ -60,7 +60,7 @@ fn test_fd_readdir(dir_fd: libc::__wasi_fd_t) {
     let mut dirs = ReadDir::from_slice(sl);
 
     // the first entry should be `.`
-    let dir = dirs.next().unwrap();
+    let dir = dirs.next().expect("first entry is None");
     assert_eq!(dir.name, ".", "first name");
     assert_eq!(
         dir.dirent.d_type,
@@ -69,7 +69,7 @@ fn test_fd_readdir(dir_fd: libc::__wasi_fd_t) {
     ); // WHY??
 
     // the second entry should be `..`
-    let dir = dirs.next().unwrap();
+    let dir = dirs.next().expect("second entry is None");
     assert_eq!(dir.name, "..", "second name");
     assert_eq!(
         dir.dirent.d_type,
