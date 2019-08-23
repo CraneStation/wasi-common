@@ -1,13 +1,14 @@
 use libc;
 use misc_tests::open_scratch_directory;
-use misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir};
+use misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir, wasi_path_open};
 use std::{cmp::min, env, mem, process, slice, str};
 use wasi::wasi_unstable;
 
 const BUF_LEN: usize = 256;
 
+#[derive(Debug)]
 struct DirEntry {
-    dirent: libc::__wasi_dirent_t,
+    dirent: wasi_unstable::Dirent,
     name: String,
 }
 
@@ -33,7 +34,7 @@ impl<'a> Iterator for ReadDir<'a> {
             }
 
             // Read the data
-            let dirent_ptr = self.buf.as_ptr() as *const libc::__wasi_dirent_t;
+            let dirent_ptr = self.buf.as_ptr() as *const wasi_unstable::Dirent;
             let dirent = *dirent_ptr;
             let name_ptr = dirent_ptr.offset(1) as *const u8;
             // NOTE Linux syscall returns a NULL-terminated name, but WASI doesn't
@@ -55,18 +56,20 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     let status = wasi_fd_filestat_get(dir_fd, &mut stat);
     assert_eq!(
         status,
-        libc::__WASI_ESUCCESS,
+        wasi_unstable::ESUCCESS,
         "reading scratch directory stats"
     );
 
+    // Check the behavior in an empty directory
     let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
     let mut bufused = unsafe { mem::zeroed() };
     let status = wasi_fd_readdir(dir_fd, &mut buf, BUF_LEN, 0, &mut bufused);
-    assert_eq!(status, libc::__WASI_ESUCCESS, "fd_readdir");
-    // Create a file in the scratch directory.
+    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
 
     let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
     let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
+    println!("{:?}", dirs);
+    assert_eq!(dirs.len(), 2, "expected two entries in an empty directory");
     dirs.sort_by_key(|d| d.name.clone());
     let mut dirs = dirs.into_iter();
 
@@ -75,7 +78,7 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     assert_eq!(dir.name, ".", "first name");
     assert_eq!(
         dir.dirent.d_type,
-        libc::__WASI_FILETYPE_REGULAR_FILE,
+        wasi_unstable::FILETYPE_REGULAR_FILE,
         "first type"
     ); // WHY??
     assert_eq!(dir.dirent.d_ino, stat.st_ino);
@@ -86,7 +89,7 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     assert_eq!(dir.name, "..", "second name");
     assert_eq!(
         dir.dirent.d_type,
-        libc::__WASI_FILETYPE_REGULAR_FILE,
+        wasi_unstable::FILETYPE_REGULAR_FILE,
         "second type"
     ); // WHY??
 
@@ -94,6 +97,54 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
         dirs.next().is_none(),
         "the directory should be seen as empty"
     );
+
+    // Add a file and check the behavior
+    let mut file_fd = wasi_unstable::Fd::max_value() - 1;
+    let status = wasi_path_open(
+        dir_fd,
+        0,
+        "file",
+        wasi_unstable::O_CREAT,
+        wasi_unstable::RIGHT_FD_READ | wasi_unstable::RIGHT_FD_WRITE,
+        0,
+        0,
+        &mut file_fd,
+    );
+    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert!(
+        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+        "file descriptor range check",
+    );
+
+    let status = wasi_fd_filestat_get(file_fd, &mut stat);
+    assert_eq!(status, wasi_unstable::ESUCCESS, "reading file stats");
+
+    println!("Executing another readdir");
+    // Execute another readdir
+    let status = wasi_fd_readdir(dir_fd, &mut buf, BUF_LEN, 0, &mut bufused);
+    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
+
+    let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
+    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
+    println!("{:?}", dirs);
+    assert_eq!(dirs.len(), 3, "expected three entries");
+    dirs.sort_by_key(|d| d.name.clone());
+    let mut dirs = dirs.into_iter();
+
+    let dir = dirs.next().expect("first entry is None");
+    assert_eq!(dir.name, ".", "first name");
+    let dir = dirs.next().expect("second entry is None");
+    assert_eq!(dir.name, "..", "second name");
+    let dir = dirs.next().expect("third entry is None");
+
+    // check the file info
+    assert_eq!(dir.name, "file", "file name doesn't match");
+    assert_eq!(
+        dir.dirent.d_type,
+        wasi_unstable::FILETYPE_REGULAR_FILE,
+        "second type"
+    );
+    assert_eq!(dir.dirent.d_ino, stat.st_ino);
 }
 fn main() {
     let mut args = env::args();
