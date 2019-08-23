@@ -66,7 +66,9 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
 
     let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
-    let mut dirs = ReadDir::from_slice(sl);
+    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
+    dirs.sort_by_key(|d| d.name.clone());
+    let mut dirs = dirs.into_iter();
 
     // the first entry should be `.`
     let dir = dirs.next().expect("first entry is None");
