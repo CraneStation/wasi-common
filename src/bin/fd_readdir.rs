@@ -2,6 +2,7 @@ use libc;
 use misc_tests::open_scratch_directory;
 use misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir};
 use std::{cmp::min, env, mem, process, slice, str};
+use wasi::wasi_unstable;
 
 const BUF_LEN: usize = 256;
 
@@ -49,8 +50,8 @@ impl<'a> Iterator for ReadDir<'a> {
     }
 }
 
-fn test_fd_readdir(dir_fd: libc::__wasi_fd_t) {
-    let mut stat: libc::__wasi_filestat_t = unsafe { mem::zeroed() };
+fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
+    let mut stat: wasi_unstable::FileStat = unsafe { mem::zeroed() };
     let status = wasi_fd_filestat_get(dir_fd, &mut stat);
     assert_eq!(
         status,

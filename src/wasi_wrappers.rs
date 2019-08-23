@@ -197,7 +197,11 @@ pub fn wasi_path_filestat_set_times(
             path_len,
             st_atim,
             st_mtim,
-            fst_flags,
+            fst_flags
+        )
+    }
+}
+
 pub fn wasi_fd_readdir(
     fd: wasi_unstable::Fd,
     buf: &mut [u8],
