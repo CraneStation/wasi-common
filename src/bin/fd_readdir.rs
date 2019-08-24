@@ -51,6 +51,19 @@ impl<'a> Iterator for ReadDir<'a> {
     }
 }
 
+fn exec_fd_readdir(fd: wasi_unstable::Fd, cookie: wasi_unstable::DirCookie) -> Vec<DirEntry> {
+    let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
+    let mut bufused = 0;
+    let status = wasi_fd_readdir(fd, &mut buf, BUF_LEN, cookie, &mut bufused);
+    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
+
+    let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
+    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
+    println!("{:?}", dirs);
+    dirs.sort_by_key(|d| d.name.clone());
+    dirs
+}
+
 fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     let mut stat: wasi_unstable::FileStat = unsafe { mem::zeroed() };
     let status = wasi_fd_filestat_get(dir_fd, &mut stat);
@@ -61,16 +74,8 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     );
 
     // Check the behavior in an empty directory
-    let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
-    let mut bufused = unsafe { mem::zeroed() };
-    let status = wasi_fd_readdir(dir_fd, &mut buf, BUF_LEN, 0, &mut bufused);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
-
-    let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
-    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
-    println!("{:?}", dirs);
+    let dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
     assert_eq!(dirs.len(), 2, "expected two entries in an empty directory");
-    dirs.sort_by_key(|d| d.name.clone());
     let mut dirs = dirs.into_iter();
 
     // the first entry should be `.`
@@ -121,20 +126,15 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
 
     println!("Executing another readdir");
     // Execute another readdir
-    let status = wasi_fd_readdir(dir_fd, &mut buf, BUF_LEN, 0, &mut bufused);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
-
-    let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
-    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
-    println!("{:?}", dirs);
+    let dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
     assert_eq!(dirs.len(), 3, "expected three entries");
-    dirs.sort_by_key(|d| d.name.clone());
     let mut dirs = dirs.into_iter();
 
     let dir = dirs.next().expect("first entry is None");
     assert_eq!(dir.name, ".", "first name");
     let dir = dirs.next().expect("second entry is None");
     assert_eq!(dir.name, "..", "second name");
+    let lastfile_cookie = dir.dirent.d_next;
     let dir = dirs.next().expect("third entry is None");
 
     // check the file info
@@ -145,7 +145,13 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
         "second type"
     );
     assert_eq!(dir.dirent.d_ino, stat.st_ino);
+
+    // check if cookie works as expected
+    let dirs = exec_fd_readdir(dir_fd, lastfile_cookie);
+    assert_eq!(dirs.len(), 1, "expected one entry");
+    assert_eq!(dirs[0].name, "file", "expected file to be the only entry");
 }
+
 fn main() {
     let mut args = env::args();
     let prog = args.next().unwrap();
