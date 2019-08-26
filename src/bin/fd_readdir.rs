@@ -59,7 +59,6 @@ fn exec_fd_readdir(fd: wasi_unstable::Fd, cookie: wasi_unstable::DirCookie) -> V
 
     let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
     let dirs: Vec<_> = ReadDir::from_slice(sl).collect();
-    println!("{:?}", dirs);
     dirs
 }
 
@@ -124,7 +123,6 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(status, wasi_unstable::ESUCCESS, "reading file stats");
 
-    println!("Executing another readdir");
     // Execute another readdir
     let mut dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
     assert_eq!(dirs.len(), 3, "expected three entries");
