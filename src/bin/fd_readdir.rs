@@ -83,9 +83,9 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     assert_eq!(dir.name, ".", "first name");
     assert_eq!(
         dir.dirent.d_type,
-        wasi_unstable::FILETYPE_REGULAR_FILE,
+        wasi_unstable::FILETYPE_DIRECTORY,
         "first type"
-    ); // WHY??
+    );
     assert_eq!(dir.dirent.d_ino, stat.st_ino);
     assert_eq!(dir.dirent.d_namlen, 1);
 
@@ -94,9 +94,9 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     assert_eq!(dir.name, "..", "second name");
     assert_eq!(
         dir.dirent.d_type,
-        wasi_unstable::FILETYPE_REGULAR_FILE,
+        wasi_unstable::FILETYPE_DIRECTORY,
         "second type"
-    ); // WHY??
+    );
 
     assert!(
         dirs.next().is_none(),
