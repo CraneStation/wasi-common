@@ -58,9 +58,8 @@ fn exec_fd_readdir(fd: wasi_unstable::Fd, cookie: wasi_unstable::DirCookie) -> V
     assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
 
     let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
-    let mut dirs: Vec<_> = ReadDir::from_slice(sl).collect();
+    let dirs: Vec<_> = ReadDir::from_slice(sl).collect();
     println!("{:?}", dirs);
-    dirs.sort_by_key(|d| d.name.clone());
     dirs
 }
 
@@ -74,7 +73,8 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     );
 
     // Check the behavior in an empty directory
-    let dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
+    let mut dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
+    dirs.sort_by_key(|d| d.name.clone());
     assert_eq!(dirs.len(), 2, "expected two entries in an empty directory");
     let mut dirs = dirs.into_iter();
 
@@ -126,30 +126,32 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
 
     println!("Executing another readdir");
     // Execute another readdir
-    let dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
+    let mut dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
     assert_eq!(dirs.len(), 3, "expected three entries");
+    // Save the data about the last entry. We need to do it before sorting.
+    let lastfile_cookie = dirs[1].dirent.d_next;
+    let lastfile_name = dirs[1].name.clone();
+    dirs.sort_by_key(|d| d.name.clone());
     let mut dirs = dirs.into_iter();
 
     let dir = dirs.next().expect("first entry is None");
     assert_eq!(dir.name, ".", "first name");
     let dir = dirs.next().expect("second entry is None");
     assert_eq!(dir.name, "..", "second name");
-    let lastfile_cookie = dir.dirent.d_next;
     let dir = dirs.next().expect("third entry is None");
-
     // check the file info
     assert_eq!(dir.name, "file", "file name doesn't match");
     assert_eq!(
         dir.dirent.d_type,
         wasi_unstable::FILETYPE_REGULAR_FILE,
-        "second type"
+        "type for the real file"
     );
     assert_eq!(dir.dirent.d_ino, stat.st_ino);
 
     // check if cookie works as expected
     let dirs = exec_fd_readdir(dir_fd, lastfile_cookie);
     assert_eq!(dirs.len(), 1, "expected one entry");
-    assert_eq!(dirs[0].name, "file", "expected file to be the only entry");
+    assert_eq!(dirs[0].name, lastfile_name, "expected file to be the only entry");
 }
 
 fn main() {
