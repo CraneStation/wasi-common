@@ -130,7 +130,7 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     assert_eq!(dirs.len(), 3, "expected three entries");
     // Save the data about the last entry. We need to do it before sorting.
     let lastfile_cookie = dirs[1].dirent.d_next;
-    let lastfile_name = dirs[1].name.clone();
+    let lastfile_name = dirs[2].name.clone();
     dirs.sort_by_key(|d| d.name.clone());
     let mut dirs = dirs.into_iter();
 
