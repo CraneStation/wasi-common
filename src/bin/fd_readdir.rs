@@ -151,7 +151,7 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
     // check if cookie works as expected
     let dirs = exec_fd_readdir(dir_fd, lastfile_cookie);
     assert_eq!(dirs.len(), 1, "expected one entry");
-    assert_eq!(dirs[0].name, lastfile_name, "expected file to be the only entry");
+    assert_eq!(dirs[0].name, lastfile_name, "name of the only entry");
 }
 
 fn main() {
