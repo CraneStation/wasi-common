@@ -1,9 +1,9 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_dir, close_fd, create_dir};
-use misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
 use std::{env, mem, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{cleanup_dir, close_fd, create_dir};
+use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
 
 fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.

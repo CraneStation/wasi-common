@@ -1,8 +1,8 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir, wasi_path_open};
 use std::{cmp::min, env, mem, process, slice, str};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir, wasi_path_open};
 
 const BUF_LEN: usize = 256;
 

@@ -1,9 +1,11 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_file, close_fd, create_dir, create_file};
-use misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_remove_directory, wasi_path_symlink};
 use std::{env, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{cleanup_file, close_fd, create_dir, create_file};
+use wasi_misc_tests::wasi_wrappers::{
+    wasi_path_open, wasi_path_remove_directory, wasi_path_symlink,
+};
 
 fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     // Create a directory for the symlink to point to.

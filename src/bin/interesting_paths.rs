@@ -1,11 +1,11 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{close_fd, create_dir, create_file};
-use misc_tests::wasi_wrappers::{
-    wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file,
-};
 use std::{env, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{close_fd, create_dir, create_file};
+use wasi_misc_tests::wasi_wrappers::{
+    wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file,
+};
 
 fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     // Create a directory in the scratch directory.

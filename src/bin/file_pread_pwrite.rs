@@ -1,9 +1,9 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_file, close_fd};
-use misc_tests::wasi_wrappers::{wasi_fd_pread, wasi_fd_pwrite, wasi_path_open};
 use std::{env, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{cleanup_file, close_fd};
+use wasi_misc_tests::wasi_wrappers::{wasi_fd_pread, wasi_fd_pwrite, wasi_path_open};
 
 fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.

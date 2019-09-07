@@ -1,5 +1,5 @@
-use misc_tests::wasi_wrappers::wasi_clock_time_get;
 use wasi::wasi_unstable;
+use wasi_misc_tests::wasi_wrappers::wasi_clock_time_get;
 
 fn test_clock_time_get() {
     // Test that clock_time_get succeeds. Even in environments where it's not

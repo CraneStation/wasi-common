@@ -1,9 +1,9 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::close_fd;
-use misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_path_open};
 use std::{env, mem, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::close_fd;
+use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_path_open};
 
 fn test_renumber(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;

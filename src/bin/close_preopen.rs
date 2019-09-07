@@ -1,8 +1,8 @@
 use libc;
-use misc_tests::open_scratch_directory;
-use misc_tests::wasi_wrappers::wasi_fd_fdstat_get;
 use std::{env, mem, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::wasi_wrappers::wasi_fd_fdstat_get;
 
 fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
