@@ -21,6 +21,7 @@ pub fn wasi_path_unlink_file(dir_fd: wasi_unstable::Fd, file_name: &str) -> wasi
     wasi_unstable::path_unlink_file(dir_fd, file_name.as_bytes())
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn wasi_path_open(
     dirfd: wasi_unstable::Fd,
     dirflags: wasi_unstable::LookupFlags,
@@ -197,7 +198,7 @@ pub fn wasi_path_filestat_set_times(
             path_len,
             st_atim,
             st_mtim,
-            fst_flags
+            fst_flags,
         )
     }
 }

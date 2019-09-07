@@ -52,7 +52,7 @@ fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
         buf_len: contents.len(),
     };
     let mut nwritten = 0;
-    status = wasi_fd_write(fd_write, &mut [ciovec], &mut nwritten);
+    status = wasi_fd_write(fd_write, &[ciovec], &mut nwritten);
     assert_eq!(status, wasi_unstable::ESUCCESS, "writing byte to file");
     assert_eq!(nwritten, 1, "nwritten bytes check");
 

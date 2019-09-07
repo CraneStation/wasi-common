@@ -29,7 +29,7 @@ impl<'a> Iterator for ReadDir<'a> {
 
     fn next(&mut self) -> Option<DirEntry> {
         unsafe {
-            if self.buf.len() == 0 {
+            if self.buf.is_empty() {
                 return None;
             }
 

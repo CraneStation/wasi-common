@@ -18,11 +18,7 @@ fn test_readlink(dir_fd: wasi_unstable::Fd) {
     status = wasi_path_readlink(dir_fd, "symlink", buf, &mut bufused);
     assert_eq!(status, wasi_unstable::ESUCCESS, "readlink should succeed");
     assert_eq!(bufused, 6, "should use 6 bytes of the buffer");
-    assert_eq!(
-        &buf[..6],
-        "target".as_bytes(),
-        "buffer should contain 'target'"
-    );
+    assert_eq!(&buf[..6], b"target", "buffer should contain 'target'");
     assert_eq!(
         &buf[6..],
         &[0u8; 4],
@@ -35,7 +31,7 @@ fn test_readlink(dir_fd: wasi_unstable::Fd) {
     status = wasi_path_readlink(dir_fd, "symlink", buf, &mut bufused);
     assert_eq!(status, wasi_unstable::ESUCCESS, "readlink should succeed");
     assert_eq!(bufused, 4, "should use all 4 bytes of the buffer");
-    assert_eq!(buf, "targ".as_bytes(), "buffer should contain 'targ'");
+    assert_eq!(buf, b"targ", "buffer should contain 'targ'");
 
     // Clean up.
     cleanup_file(dir_fd, "target");
