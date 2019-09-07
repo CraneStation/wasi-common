@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_path_open};
 
-fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
     let mut file_fd = wasi_unstable::Fd::max_value() - 1;
     let status = wasi_path_open(
@@ -18,7 +18,11 @@ fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -36,33 +40,37 @@ fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
         st_ctim: 0,
     };
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading file stats");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading file stats"
+    );
     assert_eq!(stat.st_size, 0, "file size should be 0");
 
     // Allocate some size
-    let status = wasi_unstable::fd_allocate(file_fd, 0, 100);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "allocating size");
+    assert!(
+        wasi_unstable::fd_allocate(file_fd, 0, 100).is_ok(),
+        "allocating size"
+    );
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after initial allocation"
     );
     assert_eq!(stat.st_size, 100, "file size should be 100");
 
     // Allocate should not modify if less than current size
-    let status = wasi_unstable::fd_allocate(file_fd, 10, 10);
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_unstable::fd_allocate(file_fd, 10, 10).is_ok(),
         "allocating size less than current size"
     );
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after additional allocation was not required"
     );
     assert_eq!(
@@ -71,17 +79,15 @@ fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
     );
 
     // Allocate should modify if offset+len > current_len
-    let status = wasi_unstable::fd_allocate(file_fd, 90, 20);
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_unstable::fd_allocate(file_fd, 90, 20).is_ok(),
         "allocating size larger than current size"
     );
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after additional allocation was required"
     );
     assert_eq!(
@@ -92,6 +98,7 @@ fn test_file_allocate(dir_fd: wasi_unstable::Fd) {
     close_fd(file_fd);
     cleanup_file(dir_fd, "file");
 }
+
 fn main() {
     let mut args = env::args();
     let prog = args.next().unwrap();
@@ -112,5 +119,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_file_allocate(dir_fd)
+    unsafe { test_file_allocate(dir_fd) }
 }

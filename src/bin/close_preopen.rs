@@ -4,33 +4,31 @@ use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::wasi_wrappers::wasi_fd_fdstat_get;
 
-fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
 
     assert!(dir_fd > pre_fd, "dir_fd number");
 
     // Try to close a preopened directory handle.
-    let mut status = wasi_unstable::fd_close(pre_fd);
     assert_eq!(
-        status,
-        wasi_unstable::ENOTSUP,
+        wasi_unstable::fd_close(pre_fd),
+        Err(wasi_unstable::ENOTSUP),
         "closing a preopened file descriptor",
     );
 
     // Try to renumber over a preopened directory handle.
-    status = wasi_unstable::fd_renumber(dir_fd, pre_fd);
     assert_eq!(
-        status,
-        wasi_unstable::ENOTSUP,
+        wasi_unstable::fd_renumber(dir_fd, pre_fd),
+        Err(wasi_unstable::ENOTSUP),
         "renumbering over a preopened file descriptor",
     );
 
     // Ensure that dir_fd is still open.
-    let mut dir_fdstat: wasi_unstable::FdStat = unsafe { mem::zeroed() };
-    status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
+    let mut dir_fdstat: wasi_unstable::FdStat = mem::zeroed();
+    let mut status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
     assert!(
@@ -39,10 +37,9 @@ fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
     );
 
     // Try to renumber a preopened directory handle.
-    status = wasi_unstable::fd_renumber(pre_fd, dir_fd);
     assert_eq!(
-        status,
-        wasi_unstable::ENOTSUP,
+        wasi_unstable::fd_renumber(pre_fd, dir_fd),
+        Err(wasi_unstable::ENOTSUP),
         "renumbering over a preopened file descriptor",
     );
 
@@ -50,7 +47,7 @@ fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
     assert!(
@@ -79,5 +76,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_close_preopen(dir_fd)
+    unsafe { test_close_preopen(dir_fd) }
 }

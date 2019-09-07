@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_pread, wasi_fd_pwrite, wasi_path_open};
 
-fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
     let mut file_fd = wasi_unstable::Fd::max_value() - 1;
     let mut status = wasi_path_open(
@@ -18,7 +18,11 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -31,7 +35,11 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     };
     let mut nwritten = 0;
     status = wasi_fd_pwrite(file_fd, &mut [ciovec], 0, &mut nwritten);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "writing bytes at offset 0");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "writing bytes at offset 0"
+    );
     assert_eq!(nwritten, 4, "nwritten bytes check");
 
     let contents = &mut [0u8; 4];
@@ -41,7 +49,11 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     };
     let mut nread = 0;
     status = wasi_fd_pread(file_fd, &[iovec], 0, &mut nread);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading bytes at offset 0");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading bytes at offset 0"
+    );
     assert_eq!(nread, 4, "nread bytes check");
     assert_eq!(contents, &[0u8, 1, 2, 3], "written bytes equal read bytes");
 
@@ -52,7 +64,11 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     };
     let mut nread = 0;
     status = wasi_fd_pread(file_fd, &[iovec], 2, &mut nread);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading bytes at offset 2");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading bytes at offset 2"
+    );
     assert_eq!(nread, 2, "nread bytes check");
     assert_eq!(contents, &[2u8, 3, 0, 0], "file cursor was overwritten");
 
@@ -63,7 +79,11 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     };
     let mut nwritten = 0;
     status = wasi_fd_pwrite(file_fd, &mut [ciovec], 2, &mut nwritten);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "writing bytes at offset 2");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "writing bytes at offset 2"
+    );
     assert_eq!(nwritten, 2, "nwritten bytes check");
 
     let contents = &mut [0u8; 4];
@@ -73,13 +93,18 @@ fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     };
     let mut nread = 0;
     status = wasi_fd_pread(file_fd, &[iovec], 0, &mut nread);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading bytes at offset 0");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading bytes at offset 0"
+    );
     assert_eq!(nread, 4, "nread bytes check");
     assert_eq!(contents, &[0u8, 1, 1, 0], "file cursor was overwritten");
 
     close_fd(file_fd);
     cleanup_file(dir_fd, "file");
 }
+
 fn main() {
     let mut args = env::args();
     let prog = args.next().unwrap();
@@ -100,5 +125,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_file_pread_pwrite(dir_fd)
+    unsafe { test_file_pread_pwrite(dir_fd) }
 }

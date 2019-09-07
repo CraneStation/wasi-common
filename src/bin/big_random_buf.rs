@@ -3,10 +3,8 @@ use wasi::wasi_unstable;
 fn test_big_random_buf() {
     let mut buf = Vec::new();
     buf.resize(1024, 0);
-    let status = wasi_unstable::random_get(&mut buf);
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_unstable::random_get(&mut buf).is_ok(),
         "calling get_random on a large buffer"
     );
     // Chances are pretty good that at least *one* byte will be non-zero in

@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd, create_file};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_read, wasi_fd_write, wasi_path_open};
 
-fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
     // Create file
     create_file(dir_fd, "file");
 
@@ -21,7 +21,11 @@ fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
         0,
         &mut fd_read,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         fd_read > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -39,7 +43,11 @@ fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
         0,
         &mut fd_write,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         fd_write > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -53,7 +61,11 @@ fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
     };
     let mut nwritten = 0;
     status = wasi_fd_write(fd_write, &[ciovec], &mut nwritten);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "writing byte to file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "writing byte to file"
+    );
     assert_eq!(nwritten, 1, "nwritten bytes check");
 
     // Read from file
@@ -64,7 +76,11 @@ fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
     };
     let mut nread = 0;
     status = wasi_fd_read(fd_read, &[iovec], &mut nread);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading bytes from file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading bytes from file"
+    );
     assert_eq!(nread, 1, "nread bytes check");
     assert_eq!(contents, &[1u8], "written bytes equal read bytes");
 
@@ -93,5 +109,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_file_unbuffered_write(dir_fd)
+    unsafe { test_file_unbuffered_write(dir_fd) }
 }

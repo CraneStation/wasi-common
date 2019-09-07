@@ -4,16 +4,16 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd, create_file};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_path_open};
 
-fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
     create_file(dir_fd, "file");
 
     // Get the rights for the scratch directory.
-    let mut dir_fdstat: wasi_unstable::FdStat = unsafe { mem::zeroed() };
+    let mut dir_fdstat: wasi_unstable::FdStat = mem::zeroed();
     let mut status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
     assert!(
@@ -45,7 +45,11 @@ fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
             0,
             &mut file_fd,
         );
-        assert_eq!(status, wasi_unstable::ESUCCESS, "truncating a file");
+        assert_eq!(
+            status,
+            wasi_unstable::raw::__WASI_ESUCCESS,
+            "truncating a file"
+        );
         close_fd(file_fd);
 
         let mut rights_base: wasi_unstable::Rights = dir_fdstat.fs_rights_base;
@@ -55,10 +59,8 @@ fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
             eprintln!("implementation doesn't support setting file sizes through file descriptors, skipping");
         } else {
             rights_inheriting &= !wasi_unstable::RIGHT_FD_FILESTAT_SET_SIZE;
-            status = wasi_unstable::fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting);
-            assert_eq!(
-                status,
-                wasi_unstable::ESUCCESS,
+            assert!(
+                wasi_unstable::fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting).is_ok(),
                 "droping fd_filestat_set_size inheriting right on a directory",
             );
         }
@@ -77,16 +79,14 @@ fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
         );
         assert_eq!(
             status,
-            wasi_unstable::ESUCCESS,
+            wasi_unstable::raw::__WASI_ESUCCESS,
             "truncating a file without fd_filestat_set_size right",
         );
         close_fd(file_fd);
 
         rights_base &= !wasi_unstable::RIGHT_PATH_FILESTAT_SET_SIZE;
-        status = wasi_unstable::fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting);
-        assert_eq!(
-            status,
-            wasi_unstable::ESUCCESS,
+        assert!(
+            wasi_unstable::fd_fdstat_set_rights(dir_fd, rights_base, rights_inheriting).is_ok(),
             "droping path_filestat_set_size base right on a directory",
         );
 
@@ -95,7 +95,7 @@ fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
         status = wasi_fd_fdstat_get(dir_fd, &mut dir_fdstat);
         assert_eq!(
             status,
-            wasi_unstable::ESUCCESS,
+            wasi_unstable::raw::__WASI_ESUCCESS,
             "reading the fdstat from a directory",
         );
         assert_eq!(
@@ -118,7 +118,7 @@ fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
         );
         assert_eq!(
             status,
-            wasi_unstable::ENOTCAPABLE,
+            wasi_unstable::raw::__WASI_ENOTCAPABLE,
             "truncating a file without path_filestat_set_size right",
         );
         assert_eq!(
@@ -151,5 +151,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_truncation_rights(dir_fd)
+    unsafe { test_truncation_rights(dir_fd) }
 }

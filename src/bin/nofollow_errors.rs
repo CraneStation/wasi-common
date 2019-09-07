@@ -7,17 +7,19 @@ use wasi_misc_tests::wasi_wrappers::{
     wasi_path_open, wasi_path_remove_directory, wasi_path_symlink,
 };
 
-fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     // Create a directory for the symlink to point to.
     create_dir(dir_fd, "target");
 
     // Create a symlink.
-    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
+    assert!(
+        wasi_path_symlink("target", dir_fd, "symlink").is_ok(),
+        "creating a symlink"
+    );
 
     // Try to open it as a directory with O_NOFOLLOW again.
     let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
-    status = wasi_path_open(
+    let mut status = wasi_path_open(
         dir_fd,
         0,
         "symlink",
@@ -29,7 +31,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ELOOP,
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a directory symlink as a directory",
     );
     assert_eq!(
@@ -42,7 +44,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ELOOP,
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a symlink with O_NOFOLLOW should return ELOOP",
     );
     assert_eq!(
@@ -64,7 +66,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a symlink as a directory"
     );
     assert!(
@@ -76,16 +78,16 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     // Replace the target directory with a file.
     cleanup_file(dir_fd, "symlink");
 
-    status = wasi_path_remove_directory(dir_fd, "target");
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_path_remove_directory(dir_fd, "target").is_ok(),
         "remove_directory on a directory should succeed"
     );
     create_file(dir_fd, "target");
 
-    status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
+    assert!(
+        wasi_path_symlink("target", dir_fd, "symlink").is_ok(),
+        "creating a symlink"
+    );
 
     // Try to open it as a directory with O_NOFOLLOW again.
     status = wasi_path_open(
@@ -100,7 +102,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ELOOP,
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a directory symlink as a directory",
     );
     assert_eq!(
@@ -113,7 +115,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ELOOP,
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a symlink with O_NOFOLLOW should return ELOOP",
     );
     assert_eq!(
@@ -135,7 +137,7 @@ fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ENOTDIR,
+        wasi_unstable::raw::__WASI_ENOTDIR,
         "opening a symlink to a file as a directory",
     );
     assert_eq!(
@@ -169,5 +171,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_nofollow_errors(dir_fd)
+    unsafe { test_nofollow_errors(dir_fd) }
 }

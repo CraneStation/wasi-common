@@ -4,15 +4,14 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_dir, create_dir};
 use wasi_misc_tests::wasi_wrappers::wasi_path_unlink_file;
 
-fn test_unlink_directory(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_unlink_directory(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
     // Test that unlinking it fails.
-    let status = wasi_path_unlink_file(dir_fd, "dir");
     assert_eq!(
-        status,
-        wasi_unstable::EISDIR,
+        wasi_path_unlink_file(dir_fd, "dir"),
+        Err(wasi_unstable::EISDIR),
         "unlink_file on a directory should fail"
     );
 
@@ -40,5 +39,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_unlink_directory(dir_fd)
+    unsafe { test_unlink_directory(dir_fd) }
 }

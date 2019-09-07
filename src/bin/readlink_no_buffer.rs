@@ -4,17 +4,19 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::cleanup_file;
 use wasi_misc_tests::wasi_wrappers::{wasi_path_readlink, wasi_path_symlink};
 
-fn test_readlink_no_buffer(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_readlink_no_buffer(dir_fd: wasi_unstable::Fd) {
     // First create a dangling symlink.
-    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
+    assert!(
+        wasi_path_symlink("target", dir_fd, "symlink").is_ok(),
+        "creating a symlink"
+    );
 
     // Readlink it into a non-existent buffer.
     let mut bufused: usize = 1;
-    status = wasi_path_readlink(dir_fd, "symlink", &mut [], &mut bufused);
+    let status = wasi_path_readlink(dir_fd, "symlink", &mut [], &mut bufused);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "readlink with a 0-sized buffer should succeed"
     );
     assert_eq!(
@@ -45,5 +47,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_readlink_no_buffer(dir_fd)
+    unsafe { test_readlink_no_buffer(dir_fd) }
 }

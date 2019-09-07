@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::close_fd;
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_path_open};
 
-fn test_renumber(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_renumber(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
 
     assert!(dir_fd > pre_fd, "dir_fd number");
@@ -22,18 +22,22 @@ fn test_renumber(dir_fd: wasi_unstable::Fd) {
         0,
         &mut fd_from,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         fd_from > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
     // Get fd_from fdstat attributes
-    let mut fdstat_from: wasi_unstable::FdStat = unsafe { mem::zeroed() };
+    let mut fdstat_from: wasi_unstable::FdStat = mem::zeroed();
     status = wasi_fd_fdstat_get(fd_from, &mut fdstat_from);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the open file descriptor"
     );
 
@@ -49,34 +53,35 @@ fn test_renumber(dir_fd: wasi_unstable::Fd) {
         0,
         &mut fd_to,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         fd_to > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
     // Renumber fd of file1 into fd of file2
-    status = wasi_unstable::fd_renumber(fd_from, fd_to);
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_unstable::fd_renumber(fd_from, fd_to).is_ok(),
         "renumbering two descriptors",
     );
 
     // Ensure that fd_from is closed
-    status = wasi_unstable::fd_close(fd_from);
     assert_eq!(
-        status,
-        wasi_unstable::EBADF,
+        wasi_unstable::fd_close(fd_from),
+        Err(wasi_unstable::EBADF),
         "closing already closed file descriptor"
     );
 
     // Ensure that fd_to is still open.
-    let mut fdstat_to: wasi_unstable::FdStat = unsafe { mem::zeroed() };
+    let mut fdstat_to: wasi_unstable::FdStat = mem::zeroed();
     status = wasi_fd_fdstat_get(fd_to, &mut fdstat_to);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the open file descriptor"
     );
     assert!(
@@ -110,5 +115,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_renumber(dir_fd)
+    unsafe { test_renumber(dir_fd) }
 }

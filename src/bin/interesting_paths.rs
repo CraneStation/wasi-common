@@ -7,7 +7,7 @@ use wasi_misc_tests::wasi_wrappers::{
     wasi_path_open, wasi_path_remove_directory, wasi_path_unlink_file,
 };
 
-fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
+unsafe fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
@@ -22,7 +22,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     let mut status = wasi_path_open(dir_fd, 0, "/dir/nested/file", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ENOTCAPABLE,
+        wasi_unstable::raw::__WASI_ENOTCAPABLE,
         "opening a file with an absolute path"
     );
     assert_eq!(
@@ -44,7 +44,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file with \"..\" in the path"
     );
     assert!(
@@ -57,7 +57,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file\0", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::EILSEQ,
+        wasi_unstable::raw::__WASI_EILSEQ,
         "opening a file with a trailing NUL"
     );
     assert_eq!(
@@ -70,7 +70,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file/", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ENOTDIR,
+        wasi_unstable::raw::__WASI_ENOTDIR,
         "opening a file with a trailing slash"
     );
     assert_eq!(
@@ -83,7 +83,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/file///", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ENOTDIR,
+        wasi_unstable::raw::__WASI_ENOTDIR,
         "opening a file with trailing slashes"
     );
     assert_eq!(
@@ -96,7 +96,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested/", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a directory with a trailing slash"
     );
     assert!(
@@ -109,7 +109,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, "dir/nested///", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a directory with trailing slashes"
     );
     assert!(
@@ -123,7 +123,7 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
     status = wasi_path_open(dir_fd, 0, &bad_path, 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
         status,
-        wasi_unstable::ENOTCAPABLE,
+        wasi_unstable::raw::__WASI_ENOTCAPABLE,
         "opening a file with too many \"..\"s in the path"
     );
     assert_eq!(
@@ -131,22 +131,16 @@ fn test_interesting_paths(dir_fd: wasi_unstable::Fd, arg: &str) {
         wasi_unstable::Fd::max_value(),
         "failed open should set the file descriptor to -1",
     );
-    status = wasi_path_unlink_file(dir_fd, "dir/nested/file");
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_path_unlink_file(dir_fd, "dir/nested/file").is_ok(),
         "unlink_file on a symlink should succeed"
     );
-    status = wasi_path_remove_directory(dir_fd, "dir/nested");
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_path_remove_directory(dir_fd, "dir/nested").is_ok(),
         "remove_directory on a directory should succeed"
     );
-    status = wasi_path_remove_directory(dir_fd, "dir");
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_path_remove_directory(dir_fd, "dir").is_ok(),
         "remove_directory on a directory should succeed"
     );
 }
@@ -171,5 +165,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_interesting_paths(dir_fd, &arg)
+    unsafe { test_interesting_paths(dir_fd, &arg) }
 }

@@ -4,14 +4,16 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::cleanup_file;
 use wasi_misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_symlink};
 
-fn test_dangling_symlink(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_dangling_symlink(dir_fd: wasi_unstable::Fd) {
     // First create a dangling symlink.
-    let mut status = wasi_path_symlink("target", dir_fd, "symlink");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
+    assert!(
+        wasi_path_symlink("target", dir_fd, "symlink").is_ok(),
+        "creating a symlink"
+    );
 
     // Try to open it as a directory with O_NOFOLLOW.
     let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
-    status = wasi_path_open(
+    let status = wasi_path_open(
         dir_fd,
         0,
         "symlink",
@@ -23,7 +25,7 @@ fn test_dangling_symlink(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ELOOP,
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a dangling symlink as a directory",
     );
     assert_eq!(
@@ -56,5 +58,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_dangling_symlink(dir_fd)
+    unsafe { test_dangling_symlink(dir_fd) }
 }

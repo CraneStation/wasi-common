@@ -4,17 +4,18 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::cleanup_file;
 use wasi_misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_symlink};
 
-fn test_symlink_loop(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_symlink_loop(dir_fd: wasi_unstable::Fd) {
     // Create a self-referencing symlink.
-    let mut status = wasi_path_symlink("symlink", dir_fd, "symlink");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "creating a symlink");
+    assert!(
+        wasi_path_symlink("symlink", dir_fd, "symlink").is_ok(),
+        "creating a symlink"
+    );
 
     // Try to open it.
     let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
-    status = wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd);
     assert_eq!(
-        status,
-        wasi_unstable::ELOOP,
+        wasi_path_open(dir_fd, 0, "symlink", 0, 0, 0, 0, &mut file_fd),
+        wasi_unstable::raw::__WASI_ELOOP,
         "opening a self-referencing symlink",
     );
 
@@ -42,5 +43,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_symlink_loop(dir_fd)
+    unsafe { test_symlink_loop(dir_fd) }
 }

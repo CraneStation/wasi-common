@@ -5,18 +5,20 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_dir, cleanup_file, close_fd, create_dir, create_file};
 use wasi_misc_tests::wasi_wrappers::{wasi_path_open, wasi_path_rename};
 
-fn test_path_rename(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     // First, try renaming a dir to nonexistent path
     // Create source directory
     create_dir(dir_fd, "source");
 
     // Try renaming the directory
-    let mut status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a directory");
+    assert!(
+        wasi_path_rename(dir_fd, "source", dir_fd, "target").is_ok(),
+        "renaming a directory"
+    );
 
     // Check that source directory doesn't exist anymore
     let mut fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
-    status = wasi_path_open(
+    let mut status = wasi_path_open(
         dir_fd,
         0,
         "source",
@@ -28,7 +30,7 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ENOENT,
+        wasi_unstable::raw::__WASI_ENOENT,
         "opening a nonexistent path as a directory"
     );
     assert_eq!(
@@ -50,7 +52,7 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path as a directory"
     );
     assert!(
@@ -65,8 +67,10 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     create_dir(dir_fd, "source");
     create_dir(dir_fd, "target");
 
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a directory");
+    assert!(
+        wasi_path_rename(dir_fd, "source", dir_fd, "target").is_ok(),
+        "renaming a directory"
+    );
 
     // Check that source directory doesn't exist anymore
     fd = wasi_unstable::Fd::max_value() - 1;
@@ -82,7 +86,7 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ENOENT,
+        wasi_unstable::raw::__WASI_ENOENT,
         "opening a nonexistent path as a directory"
     );
     assert_eq!(
@@ -104,7 +108,7 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     );
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path as a directory"
     );
     assert!(
@@ -120,18 +124,16 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     create_dir(dir_fd, "target");
     create_file(dir_fd, "target/file");
 
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
     assert_eq!(
-        status,
-        wasi_unstable::ENOTEMPTY,
+        wasi_path_rename(dir_fd, "source", dir_fd, "target"),
+        Err(wasi_unstable::ENOTEMPTY),
         "renaming directory to a nonempty directory"
     );
 
     // Try renaming dir to a file
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target/file");
     assert_eq!(
-        status,
-        wasi_unstable::ENOTDIR,
+        wasi_path_rename(dir_fd, "source", dir_fd, "target/file"),
+        Err(wasi_unstable::ENOTDIR),
         "renaming directory to a file"
     );
 
@@ -142,13 +144,19 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     // Now, try renaming a file to a nonexistent path
     create_file(dir_fd, "source");
 
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(status, wasi_unstable::ESUCCESS, "renaming a file");
+    assert!(
+        wasi_path_rename(dir_fd, "source", dir_fd, "target").is_ok(),
+        "renaming a file"
+    );
 
     // Check that source file doesn't exist anymore
     fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(dir_fd, 0, "source", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, wasi_unstable::ENOENT, "opening a nonexistent path");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ENOENT,
+        "opening a nonexistent path"
+    );
     assert_eq!(
         fd,
         wasi_unstable::Fd::max_value(),
@@ -157,7 +165,11 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
 
     // Check that target file exists
     status = wasi_path_open(dir_fd, 0, "target", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening renamed path");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening renamed path"
+    );
     assert!(
         fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -170,17 +182,19 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     create_file(dir_fd, "source");
     create_file(dir_fd, "target");
 
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
-    assert_eq!(
-        status,
-        wasi_unstable::ESUCCESS,
+    assert!(
+        wasi_path_rename(dir_fd, "source", dir_fd, "target").is_ok(),
         "renaming file to another existing file"
     );
 
     // Check that source file doesn't exist anymore
     fd = wasi_unstable::Fd::max_value() - 1;
     status = wasi_path_open(dir_fd, 0, "source", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, wasi_unstable::ENOENT, "opening a nonexistent path");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ENOENT,
+        "opening a nonexistent path"
+    );
     assert_eq!(
         fd,
         wasi_unstable::Fd::max_value(),
@@ -189,7 +203,11 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
 
     // Check that target file exists
     status = wasi_path_open(dir_fd, 0, "target", 0, 0, 0, 0, &mut fd);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening renamed path");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening renamed path"
+    );
     assert!(
         fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -202,10 +220,9 @@ fn test_path_rename(dir_fd: wasi_unstable::Fd) {
     create_file(dir_fd, "source");
     create_dir(dir_fd, "target");
 
-    status = wasi_path_rename(dir_fd, "source", dir_fd, "target");
     assert_eq!(
-        status,
-        wasi_unstable::EISDIR,
+        wasi_path_rename(dir_fd, "source", dir_fd, "target"),
+        Err(wasi_unstable::EISDIR),
         "renaming file to existing directory"
     );
 
@@ -233,5 +250,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_path_rename(dir_fd)
+    unsafe { test_path_rename(dir_fd) }
 }

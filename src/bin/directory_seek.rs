@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_dir, close_fd, create_dir};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
 
-fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.
     create_dir(dir_fd, "dir");
 
@@ -21,7 +21,11 @@ fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
         0,
         &mut fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -30,14 +34,18 @@ fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
     // Attempt to seek.
     let mut newoffset = 1;
     status = wasi_fd_seek(fd, 0, wasi_unstable::WHENCE_CUR, &mut newoffset);
-    assert_eq!(status, wasi_unstable::ENOTCAPABLE, "seek on a directory");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ENOTCAPABLE,
+        "seek on a directory"
+    );
 
     // Check if we obtained the right to seek.
-    let mut fdstat: wasi_unstable::FdStat = unsafe { mem::zeroed() };
+    let mut fdstat: wasi_unstable::FdStat = mem::zeroed();
     status = wasi_fd_fdstat_get(fd, &mut fdstat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on a directory"
     );
     assert!(
@@ -75,5 +83,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_directory_seek(dir_fd)
+    unsafe { test_directory_seek(dir_fd) }
 }

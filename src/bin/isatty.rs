@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::wasi_path_open;
 
-fn test_isatty(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_isatty(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory and test if it's a tty.
     let mut file_fd: wasi_unstable::Fd = wasi_unstable::Fd::max_value() - 1;
     let status = wasi_path_open(
@@ -18,13 +18,17 @@ fn test_isatty(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     assert_eq!(
-        unsafe { libc::isatty(file_fd as std::os::raw::c_int) },
+        libc::isatty(file_fd as std::os::raw::c_int),
         0,
         "file is a tty"
     );
@@ -53,5 +57,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_isatty(dir_fd)
+    unsafe { test_isatty(dir_fd) }
 }

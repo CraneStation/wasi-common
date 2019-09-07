@@ -51,23 +51,26 @@ impl<'a> Iterator for ReadDir<'a> {
     }
 }
 
-fn exec_fd_readdir(fd: wasi_unstable::Fd, cookie: wasi_unstable::DirCookie) -> Vec<DirEntry> {
+unsafe fn exec_fd_readdir(
+    fd: wasi_unstable::Fd,
+    cookie: wasi_unstable::DirCookie,
+) -> Vec<DirEntry> {
     let mut buf: [u8; BUF_LEN] = [0; BUF_LEN];
     let mut bufused = 0;
     let status = wasi_fd_readdir(fd, &mut buf, BUF_LEN, cookie, &mut bufused);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_readdir");
+    assert_eq!(status, wasi_unstable::raw::__WASI_ESUCCESS, "fd_readdir");
 
-    let sl = unsafe { slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused)) };
+    let sl = slice::from_raw_parts(buf.as_ptr(), min(BUF_LEN, bufused));
     let dirs: Vec<_> = ReadDir::from_slice(sl).collect();
     dirs
 }
 
-fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
-    let mut stat: wasi_unstable::FileStat = unsafe { mem::zeroed() };
+unsafe fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
+    let mut stat: wasi_unstable::FileStat = mem::zeroed();
     let status = wasi_fd_filestat_get(dir_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading scratch directory stats"
     );
 
@@ -114,14 +117,22 @@ fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading file stats");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading file stats"
+    );
 
     // Execute another readdir
     let mut dirs = exec_fd_readdir(dir_fd, wasi_unstable::DIRCOOKIE_START);
@@ -172,5 +183,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_fd_readdir(dir_fd)
+    unsafe { test_fd_readdir(dir_fd) }
 }

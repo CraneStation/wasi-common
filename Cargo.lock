@@ -2,22 +2,22 @@
 # It is not intended for manual editing.
 [[package]]
 name = "libc"
-version = "0.2.60"
-source = "git+https://github.com/rust-lang/libc#2b01f7e67322175e05f25325e6e941aa9a3ddeae"
-
-[[package]]
-name = "misc-tests"
-version = "0.1.0"
-dependencies = [
- "libc 0.2.60 (git+https://github.com/rust-lang/libc)",
- "wasi 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
+version = "0.2.62"
+source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "wasi"
-version = "0.5.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
+[[package]]
+name = "wasi-misc-tests"
+version = "0.1.0"
+dependencies = [
+ "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasi 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
 [metadata]
-"checksum libc 0.2.60 (git+https://github.com/rust-lang/libc)" = "<none>"
-"checksum wasi 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fd5442abcac6525a045cc8c795aedb60da7a2e5e89c7bf18a0d5357849bb23c7"
+"checksum libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)" = "34fcd2c08d2f832f376f4173a231990fa5aef4e99fb569867318a227ef4c06ba"
+"checksum wasi 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b89c3ce4ce14bdc6fb6beaf9ec7928ca331de5df7e5ea278375642a2f478570d"

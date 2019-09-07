@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_seek, wasi_fd_tell, wasi_fd_write, wasi_path_open};
 
-fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
     let mut file_fd = wasi_unstable::Fd::max_value() - 1;
     let mut status = wasi_path_open(
@@ -18,7 +18,11 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -29,7 +33,7 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_tell(file_fd, &mut offset);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "getting initial file offset"
     );
     assert_eq!(offset, 0, "current offset should be 0");
@@ -43,14 +47,18 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     let iovs = &[iov];
     let mut nwritten = 0;
     status = wasi_fd_write(file_fd, iovs, &mut nwritten);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "writing to a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "writing to a file"
+    );
     assert_eq!(nwritten, 100, "should write 100 bytes to file");
 
     // Check current offset
     status = wasi_fd_tell(file_fd, &mut offset);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "getting file offset after writing"
     );
     assert_eq!(offset, 100, "offset after writing should be 100");
@@ -60,7 +68,7 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_seek(file_fd, -50, wasi_unstable::WHENCE_CUR, &mut newoffset);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "seeking to the middle of a file"
     );
     assert_eq!(
@@ -72,7 +80,7 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_seek(file_fd, 0, wasi_unstable::WHENCE_SET, &mut newoffset);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "seeking to the beginning of the file"
     );
     assert_eq!(
@@ -84,7 +92,7 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_seek(file_fd, 1000, wasi_unstable::WHENCE_CUR, &mut newoffset);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "seeking beyond the end of the file"
     );
 
@@ -92,7 +100,7 @@ fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     status = wasi_fd_seek(file_fd, -2000, wasi_unstable::WHENCE_CUR, &mut newoffset);
     assert_eq!(
         status,
-        wasi_unstable::EINVAL,
+        wasi_unstable::raw::__WASI_EINVAL,
         "seeking before byte 0 is an error"
     );
 
@@ -119,5 +127,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_file_seek_tell(dir_fd)
+    unsafe { test_file_seek_tell(dir_fd) }
 }

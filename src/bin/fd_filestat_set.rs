@@ -5,7 +5,7 @@ use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_path_open};
 
-fn test_fd_filestat_set(dir_fd: wasi_unstable::Fd) {
+unsafe fn test_fd_filestat_set(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
     let mut file_fd = wasi_unstable::Fd::max_value() - 1;
     let status = wasi_path_open(
@@ -18,7 +18,11 @@ fn test_fd_filestat_set(dir_fd: wasi_unstable::Fd) {
         0,
         &mut file_fd,
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "opening a file");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "opening a file"
+    );
     assert!(
         file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
@@ -36,17 +40,23 @@ fn test_fd_filestat_set(dir_fd: wasi_unstable::Fd) {
         st_ctim: 0,
     };
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "reading file stats");
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading file stats"
+    );
     assert_eq!(stat.st_size, 0, "file size should be 0");
 
     // Check fd_filestat_set_size
-    let status = wasi_unstable::fd_filestat_set_size(file_fd, 100);
-    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_filestat_set_size");
+    assert!(
+        wasi_unstable::fd_filestat_set_size(file_fd, 100).is_ok(),
+        "fd_filestat_set_size"
+    );
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after fd_filestat_set_size"
     );
     assert_eq!(stat.st_size, 100, "file size should be 100");
@@ -54,18 +64,21 @@ fn test_fd_filestat_set(dir_fd: wasi_unstable::Fd) {
     // Check fd_filestat_set_times
     let old_atim = stat.st_atim;
     let new_mtim = stat.st_mtim - 100;
-    let status = wasi_unstable::fd_filestat_set_times(
-        file_fd,
-        new_mtim,
-        new_mtim,
-        wasi_unstable::FILESTAT_SET_MTIM,
+    assert!(
+        wasi_unstable::fd_filestat_set_times(
+            file_fd,
+            new_mtim,
+            new_mtim,
+            wasi_unstable::FILESTAT_SET_MTIM,
+        )
+        .is_ok(),
+        "fd_filestat_set_times"
     );
-    assert_eq!(status, wasi_unstable::ESUCCESS, "fd_filestat_set_times");
 
     let status = wasi_fd_filestat_get(file_fd, &mut stat);
     assert_eq!(
         status,
-        wasi_unstable::ESUCCESS,
+        wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after fd_filestat_set_times"
     );
     assert_eq!(
@@ -101,5 +114,5 @@ fn main() {
     };
 
     // Run the tests.
-    test_fd_filestat_set(dir_fd)
+    unsafe { test_fd_filestat_set(dir_fd) }
 }
