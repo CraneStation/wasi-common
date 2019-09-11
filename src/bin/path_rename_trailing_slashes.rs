@@ -1,25 +1,25 @@
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_dir, cleanup_file, create_dir, create_file};
-use misc_tests::wasi_wrappers::wasi_path_rename;
 use std::{env, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{cleanup_dir, cleanup_file, create_dir, create_file};
+use wasi_misc_tests::wasi_wrappers::wasi_path_rename;
 
 unsafe fn test_path_rename_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     // Test renaming a file with a trailing slash in the name.
     create_file(dir_fd, "source");
     assert_eq!(
         wasi_path_rename(dir_fd, "source/", dir_fd, "target"),
-        wasi_unstable::raw::__WASI_ENOTDIR,
+        Err(wasi_unstable::ENOTDIR),
         "renaming a file with a trailing slash in the source name"
     );
     assert_eq!(
         wasi_path_rename(dir_fd, "source", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_ENOTDIR,
+        Err(wasi_unstable::ENOTDIR),
         "renaming a file with a trailing slash in the destination name"
     );
     assert_eq!(
         wasi_path_rename(dir_fd, "source/", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_ENOTDIR,
+        Err(wasi_unstable::ENOTDIR),
         "renaming a file with a trailing slash in the source and destination names"
     );
     cleanup_file(dir_fd, "source");
@@ -28,17 +28,17 @@ unsafe fn test_path_rename_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     create_dir(dir_fd, "source");
     assert_eq!(
         wasi_path_rename(dir_fd, "source/", dir_fd, "target"),
-        wasi_unstable::raw::__WASI_ESUCCESS,
+        Ok(()),
         "renaming a directory with a trailing slash in the source name"
     );
     assert_eq!(
         wasi_path_rename(dir_fd, "target", dir_fd, "source/"),
-        wasi_unstable::raw::__WASI_ESUCCESS,
+        Ok(()),
         "renaming a directory with a trailing slash in the destination name"
     );
     assert_eq!(
         wasi_path_rename(dir_fd, "source/", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_ESUCCESS,
+        Ok(()),
         "renaming a directory with a trailing slash in the source and destination names"
     );
     cleanup_dir(dir_fd, "target");

@@ -1,21 +1,21 @@
-use misc_tests::open_scratch_directory;
-use misc_tests::utils::{cleanup_dir, cleanup_file, create_dir, create_file};
-use misc_tests::wasi_wrappers::wasi_path_symlink;
 use std::{env, process};
 use wasi::wasi_unstable;
+use wasi_misc_tests::open_scratch_directory;
+use wasi_misc_tests::utils::{cleanup_dir, cleanup_file, create_dir, create_file};
+use wasi_misc_tests::wasi_wrappers::wasi_path_symlink;
 
 unsafe fn test_path_symlink_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     // Link destination shouldn't end with a slash.
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_ENOENT,
+        Err(wasi_unstable::ENOENT),
         "link destination ending with a slash"
     );
 
     // Without the trailing slash, this should succeed.
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target"),
-        wasi_unstable::raw::__WASI_ESUCCESS,
+        Ok(()),
         "link destination ending with a slash"
     );
     cleanup_file(dir_fd, "target");
@@ -24,7 +24,7 @@ unsafe fn test_path_symlink_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     create_dir(dir_fd, "target");
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_EEXIST,
+        Err(wasi_unstable::EEXIST),
         "link destination already exists"
     );
     cleanup_dir(dir_fd, "target");
@@ -33,7 +33,7 @@ unsafe fn test_path_symlink_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     create_dir(dir_fd, "target");
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target"),
-        wasi_unstable::raw::__WASI_EEXIST,
+        Err(wasi_unstable::EEXIST),
         "link destination already exists"
     );
     cleanup_dir(dir_fd, "target");
@@ -42,7 +42,7 @@ unsafe fn test_path_symlink_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     create_file(dir_fd, "target");
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target/"),
-        wasi_unstable::raw::__WASI_EEXIST,
+        Err(wasi_unstable::EEXIST),
         "link destination already exists"
     );
     cleanup_file(dir_fd, "target");
@@ -51,7 +51,7 @@ unsafe fn test_path_symlink_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     create_file(dir_fd, "target");
     assert_eq!(
         wasi_path_symlink("source", dir_fd, "target"),
-        wasi_unstable::raw::__WASI_EEXIST,
+        Err(wasi_unstable::EEXIST),
         "link destination already exists"
     );
     cleanup_file(dir_fd, "target");

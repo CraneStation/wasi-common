@@ -1,7 +1,7 @@
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
-use wasi_misc_tests::utils::{cleanup_dir, create_dir};
+use wasi_misc_tests::utils::{cleanup_dir, create_dir, create_file};
 use wasi_misc_tests::wasi_wrappers::wasi_path_unlink_file;
 
 unsafe fn test_unlink_file_trailing_slashes(dir_fd: wasi_unstable::Fd) {
@@ -18,7 +18,7 @@ unsafe fn test_unlink_file_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     // Test that unlinking it with a trailing flash fails.
     assert_eq!(
         wasi_path_unlink_file(dir_fd, "dir/"),
-        wasi_unstable::EISDIR,
+        Err(wasi_unstable::EISDIR),
         "unlink_file on a directory should fail"
     );
 
@@ -31,14 +31,14 @@ unsafe fn test_unlink_file_trailing_slashes(dir_fd: wasi_unstable::Fd) {
     // Test that unlinking it with a trailing flash fails.
     assert_eq!(
         wasi_path_unlink_file(dir_fd, "file/"),
-        wasi_unstable::ENOTDIR,
+        Err(wasi_unstable::ENOTDIR),
         "unlink_file with a trailing slash should fail"
     );
 
     // Test that unlinking it with no trailing flash succeeds.
     assert_eq!(
         wasi_path_unlink_file(dir_fd, "file"),
-        wasi_unstable::ESUCCESS,
+        Ok(()),
         "unlink_file with no trailing slash should succeed"
     );
 }
