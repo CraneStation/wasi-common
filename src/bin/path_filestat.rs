@@ -94,19 +94,19 @@ unsafe fn test_path_filestat(dir_fd: wasi_unstable::Fd) {
             wasi_unstable::FILESTAT_SET_MTIM,
         )
         .is_ok(),
-        "fd_filestat_set_times"
+        "path_filestat_set_times should succeed"
     );
 
     let status = wasi_path_filestat_get(dir_fd, 0, filename, filename.len(), &mut stat);
     assert_eq!(
         status,
         wasi_unstable::raw::__WASI_ESUCCESS,
-        "reading file stats after fd_filestat_set_times"
+        "reading file stats after path_filestat_set_times"
     );
     assert_eq!(stat.st_mtim, new_mtim, "mtim should change");
     assert_eq!(stat.st_atim, old_atim, "atim should not change");
 
-    assert!(
+    assert_eq!(
         wasi_path_filestat_set_times(
             dir_fd,
             0,
@@ -114,9 +114,9 @@ unsafe fn test_path_filestat(dir_fd: wasi_unstable::Fd) {
             new_mtim,
             new_mtim,
             wasi_unstable::FILESTAT_SET_MTIM | wasi_unstable::FILESTAT_SET_MTIM_NOW,
-        )
-        .is_ok(),
-        "ATIM & ATIM_NOW can't both be set"
+        ),
+        Err(wasi_unstable::EINVAL),
+        "MTIM & MTIM_NOW can't both be set"
     );
 
     // check if the times were untouched
@@ -125,6 +125,30 @@ unsafe fn test_path_filestat(dir_fd: wasi_unstable::Fd) {
         status,
         wasi_unstable::raw::__WASI_ESUCCESS,
         "reading file stats after EINVAL fd_filestat_set_times"
+    );
+    assert_eq!(stat.st_mtim, new_mtim, "mtim should not change");
+    assert_eq!(stat.st_atim, old_atim, "atim should not change");
+
+    let new_atim = old_atim - 100;
+    assert_eq!(
+        wasi_path_filestat_set_times(
+            dir_fd,
+            0,
+            filename,
+            new_atim,
+            new_atim,
+            wasi_unstable::FILESTAT_SET_ATIM | wasi_unstable::FILESTAT_SET_ATIM_NOW,
+        ),
+        Err(wasi_unstable::EINVAL),
+        "ATIM & ATIM_NOW can't both be set"
+    );
+
+    // check if the times were untouched
+    let status = wasi_path_filestat_get(dir_fd, 0, filename, filename.len(), &mut stat);
+    assert_eq!(
+        status,
+        wasi_unstable::raw::__WASI_ESUCCESS,
+        "reading file stats after EINVAL path_filestat_set_times"
     );
     assert_eq!(stat.st_mtim, new_mtim, "mtim should not change");
     assert_eq!(stat.st_atim, old_atim, "atim should not change");
