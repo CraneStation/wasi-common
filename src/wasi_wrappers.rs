@@ -206,3 +206,12 @@ pub unsafe fn wasi_fd_readdir(
         buf_used,
     )
 }
+
+pub unsafe fn wasi_fd_advise(
+    fd: wasi_unstable::Fd,
+    offset: wasi_unstable::FileSize,
+    len: wasi_unstable::FileSize,
+    advice: wasi_unstable::Advice,
+) -> wasi_unstable::Errno {
+    wasi_unstable::raw::__wasi_fd_advise(fd, offset, len, advice)
+}
