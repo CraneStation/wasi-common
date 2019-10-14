@@ -16,16 +16,18 @@ unsafe fn test_truncation_rights(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the scratch directory"
     );
-    assert!(
-        dir_fdstat.fs_filetype == wasi_unstable::FILETYPE_DIRECTORY,
+    assert_eq!(
+        dir_fdstat.fs_filetype,
+        wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
-    assert!(
-        dir_fdstat.fs_flags == 0,
+    assert_eq!(
+        dir_fdstat.fs_flags, 0,
         "expected the scratch directory to have no special flags",
     );
-    assert!(
-        (dir_fdstat.fs_rights_base & wasi_unstable::RIGHT_FD_FILESTAT_SET_SIZE) == 0,
+    assert_eq!(
+        dir_fdstat.fs_rights_base & wasi_unstable::RIGHT_FD_FILESTAT_SET_SIZE,
+        0,
         "directories shouldn't have the fd_filestat_set_size right",
     );
 

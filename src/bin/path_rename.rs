@@ -1,4 +1,5 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
@@ -55,8 +56,9 @@ unsafe fn test_path_rename(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path as a directory"
     );
-    assert!(
-        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -111,8 +113,9 @@ unsafe fn test_path_rename(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path as a directory"
     );
-    assert!(
-        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -170,8 +173,9 @@ unsafe fn test_path_rename(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path"
     );
-    assert!(
-        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -208,8 +212,9 @@ unsafe fn test_path_rename(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening renamed path"
     );
-    assert!(
-        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 

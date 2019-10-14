@@ -33,8 +33,9 @@ pub unsafe fn create_file(dir_fd: wasi_unstable::Fd, file_name: &str) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "creating a file"
     );
-    assert!(
-        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        file_fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);

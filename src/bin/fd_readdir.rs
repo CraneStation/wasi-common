@@ -3,6 +3,7 @@ use std::{cmp::min, env, mem, process, slice, str};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_filestat_get, wasi_fd_readdir, wasi_path_open};
+use more_asserts::assert_gt;
 
 const BUF_LEN: usize = 256;
 
@@ -122,8 +123,8 @@ unsafe fn test_fd_readdir(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        file_fd, libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 

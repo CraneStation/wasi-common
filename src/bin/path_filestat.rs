@@ -1,4 +1,5 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
@@ -12,12 +13,14 @@ unsafe fn test_path_filestat(dir_fd: wasi_unstable::Fd) {
     let status = wasi_fd_fdstat_get(dir_fd, &mut fdstat);
     assert_eq!(status, wasi_unstable::raw::__WASI_ESUCCESS, "fd_fdstat_get");
 
-    assert!(
-        (fdstat.fs_rights_base & wasi_unstable::RIGHT_PATH_FILESTAT_GET) != 0,
+    assert_ne!(
+        fdstat.fs_rights_base & wasi_unstable::RIGHT_PATH_FILESTAT_GET,
+        0,
         "the scratch directory should have RIGHT_PATH_FILESTAT_GET as base right",
     );
-    assert!(
-        (fdstat.fs_rights_inheriting & wasi_unstable::RIGHT_PATH_FILESTAT_GET) != 0,
+    assert_ne!(
+        fdstat.fs_rights_inheriting & wasi_unstable::RIGHT_PATH_FILESTAT_GET,
+        0,
         "the scratch directory should have RIGHT_PATH_FILESTAT_GET as base right",
     );
 
@@ -41,8 +44,9 @@ unsafe fn test_path_filestat(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        file_fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 

@@ -4,6 +4,7 @@ use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_pread, wasi_fd_pwrite, wasi_path_open};
+use more_asserts::assert_gt;
 
 unsafe fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
@@ -23,8 +24,8 @@ unsafe fn test_file_pread_pwrite(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        file_fd, libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 

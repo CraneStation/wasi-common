@@ -1,4 +1,5 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, mem, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
@@ -8,7 +9,7 @@ use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_path_open};
 unsafe fn test_renumber(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
 
-    assert!(dir_fd > pre_fd, "dir_fd number");
+    assert_gt!(dir_fd, pre_fd, "dir_fd number");
 
     // Create a file in the scratch directory.
     let mut fd_from = wasi_unstable::Fd::max_value() - 1;
@@ -27,8 +28,9 @@ unsafe fn test_renumber(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        fd_from > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd_from,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -58,8 +60,9 @@ unsafe fn test_renumber(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        fd_to > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd_to,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -84,12 +87,21 @@ unsafe fn test_renumber(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on the open file descriptor"
     );
-    assert!(
-        fdstat_from.fs_filetype == fdstat_to.fs_filetype
-            && fdstat_from.fs_flags == fdstat_to.fs_flags
-            && fdstat_from.fs_rights_base == fdstat_to.fs_rights_base
-            && fdstat_from.fs_rights_inheriting == fdstat_to.fs_rights_inheriting,
-        "expected fd_to have the same fdstat as fd_from",
+    assert_eq!(
+        fdstat_from.fs_filetype, fdstat_to.fs_filetype,
+        "expected fd_to have the same fdstat as fd_from"
+    );
+    assert_eq!(
+        fdstat_from.fs_flags, fdstat_to.fs_flags,
+        "expected fd_to have the same fdstat as fd_from"
+    );
+    assert_eq!(
+        fdstat_from.fs_rights_base, fdstat_to.fs_rights_base,
+        "expected fd_to have the same fdstat as fd_from"
+    );
+    assert_eq!(
+        fdstat_from.fs_rights_inheriting, fdstat_to.fs_rights_inheriting,
+        "expected fd_to have the same fdstat as fd_from"
     );
 
     close_fd(fd_to);

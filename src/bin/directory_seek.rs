@@ -4,6 +4,7 @@ use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_dir, close_fd, create_dir};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_fdstat_get, wasi_fd_seek, wasi_path_open};
+use more_asserts::assert_gt;
 
 unsafe fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
     // Create a directory in the scratch directory.
@@ -26,8 +27,8 @@ unsafe fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a file"
     );
-    assert!(
-        fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        fd, libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -48,8 +49,8 @@ unsafe fn test_directory_seek(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "calling fd_fdstat on a directory"
     );
-    assert!(
-        fdstat.fs_filetype == wasi_unstable::FILETYPE_DIRECTORY,
+    assert_eq!(
+        fdstat.fs_filetype, wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
     assert_eq!(

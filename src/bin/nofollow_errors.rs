@@ -1,4 +1,5 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
@@ -69,8 +70,9 @@ unsafe fn test_nofollow_errors(dir_fd: wasi_unstable::Fd) {
         wasi_unstable::raw::__WASI_ESUCCESS,
         "opening a symlink as a directory"
     );
-    assert!(
-        file_fd > libc::STDERR_FILENO as wasi_unstable::Fd,
+    assert_gt!(
+        file_fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
     close_fd(file_fd);
