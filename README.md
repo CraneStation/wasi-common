@@ -1,6 +1,7 @@
-# wasi-misc-tests [![build-status]]
+# wasi-misc-tests [![build-status]][actions]
 
 [build-status]: https://github.com/CraneStation/wasi-misc-tests/workflows/Rust/badge.svg
+[actions]: https://github.com/CraneStation/wasi-misc-tests/actions
 [misc-testsuite]: https://github.com/CraneStation/wasi-common/tree/master/misc_testsuite
 [wasi-common]: https://github.com/CraneStation/wasi-common
 
