@@ -1,4 +1,5 @@
 use crate::wasi_wrappers::*;
+use more_asserts::assert_gt;
 use wasi::wasi_unstable;
 
 pub unsafe fn create_dir(dir_fd: wasi_unstable::Fd, dir_name: &str) {
