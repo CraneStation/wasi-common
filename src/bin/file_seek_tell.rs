@@ -1,10 +1,10 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_seek, wasi_fd_tell, wasi_fd_write, wasi_path_open};
-use more_asserts::assert_gt;
 
 unsafe fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
     // Create a file in the scratch directory.
@@ -25,7 +25,8 @@ unsafe fn test_file_seek_tell(dir_fd: wasi_unstable::Fd) {
         "opening a file"
     );
     assert_gt!(
-        file_fd, libc::STDERR_FILENO as wasi_unstable::Fd,
+        file_fd,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 

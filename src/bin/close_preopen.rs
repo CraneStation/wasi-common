@@ -1,9 +1,9 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, mem, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::wasi_wrappers::wasi_fd_fdstat_get;
-use more_asserts::assert_gt;
 
 unsafe fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
     let pre_fd: wasi_unstable::Fd = (libc::STDERR_FILENO + 1) as wasi_unstable::Fd;
@@ -33,7 +33,8 @@ unsafe fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
         "calling fd_fdstat on the scratch directory"
     );
     assert_eq!(
-        dir_fdstat.fs_filetype, wasi_unstable::FILETYPE_DIRECTORY,
+        dir_fdstat.fs_filetype,
+        wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
 
@@ -52,7 +53,8 @@ unsafe fn test_close_preopen(dir_fd: wasi_unstable::Fd) {
         "calling fd_fdstat on the scratch directory"
     );
     assert_eq!(
-        dir_fdstat.fs_filetype, wasi_unstable::FILETYPE_DIRECTORY,
+        dir_fdstat.fs_filetype,
+        wasi_unstable::FILETYPE_DIRECTORY,
         "expected the scratch directory to be a directory",
     );
 }

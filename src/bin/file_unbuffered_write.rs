@@ -1,10 +1,10 @@
 use libc;
+use more_asserts::assert_gt;
 use std::{env, process};
 use wasi::wasi_unstable;
 use wasi_misc_tests::open_scratch_directory;
 use wasi_misc_tests::utils::{cleanup_file, close_fd, create_file};
 use wasi_misc_tests::wasi_wrappers::{wasi_fd_read, wasi_fd_write, wasi_path_open};
-use more_asserts::assert_gt;
 
 unsafe fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
     // Create file
@@ -28,7 +28,8 @@ unsafe fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
         "opening a file"
     );
     assert_gt!(
-        fd_read, libc::STDERR_FILENO as wasi_unstable::Fd,
+        fd_read,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
@@ -50,7 +51,8 @@ unsafe fn test_file_unbuffered_write(dir_fd: wasi_unstable::Fd) {
         "opening a file"
     );
     assert_gt!(
-        fd_write, libc::STDERR_FILENO as wasi_unstable::Fd,
+        fd_write,
+        libc::STDERR_FILENO as wasi_unstable::Fd,
         "file descriptor range check",
     );
 
