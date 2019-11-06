@@ -1,11 +1,7 @@
 [package]
 name = "wasi-common"
 version = "0.5.0"
-authors = [
-    "Adam C. Foltzer <acfoltzer@fastly.com>",
-    "Frank Denis <github@pureftpd.org>",
-    "Jakub Konka <kubkon@jakubkonka.com>",
-    "Dan Gohman <sunfish@mozilla.com>"]
+authors = ["The Wasmtime Project Developers"]
 edition = "2018"
 license = "Apache-2.0 WITH LLVM-exception"
 description = "WASI implementation in Rust"
@@ -41,15 +37,18 @@ cpu-time = "1.0"
 
 
 [dev-dependencies]
-wasmtime-runtime = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-environ = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-jit = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-wasi = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-wasmtime-api = { git = "https://github.com/cranestation/wasmtime", rev = "b42e550" }
-cranelift-codegen = "0.46.1"
+wasmtime-runtime = { git = "https://github.com/cranestation/wasmtime", rev = "10f2719" }
+wasmtime-environ = { git = "https://github.com/cranestation/wasmtime", rev = "10f2719" }
+wasmtime-jit = { git = "https://github.com/cranestation/wasmtime", rev = "10f2719" }
+wasmtime-wasi = { git = "https://github.com/cranestation/wasmtime", rev = "10f2719" }
+wasmtime-api = { git = "https://github.com/cranestation/wasmtime", rev = "10f2719" }
+cranelift-codegen = "0.47"
 target-lexicon = "0.8.1"
 pretty_env_logger = "0.3.0"
 tempfile = "3.1.0"
+# this is just a temp fix to make the tests build and run; I hope this to be
+# completely removed when we merge `wasi-common` into `wasmtime`
+faerie = "=0.11.0"
 
 [patch."https://github.com/CraneStation/wasi-common"]
 wasi-common = { path = "." }
@@ -63,4 +62,4 @@ crate-type = ["rlib", "staticlib", "cdylib"]
 
 [workspace]
 members = ["wasi-common-cbindgen"]
-exclude = ["winx", "misc_testsuite"]
+exclude = ["wasi-misc-tests", "wig", "winx", "WASI/tools/witx"]
